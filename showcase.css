@@ -73,11 +73,12 @@
 #clawdy-3d .art {
   grid-area: art;
   position: relative;
-  width: min(78vw, 435px);
+  width: min(95vw, 550px);
+  aspect-ratio: 6 / 5;
   margin: 0;
 }
 
-#clawdy-3d .art img { display: block; width: 100%; height: auto; }
+#clawdy-3d .art img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 #clawdy-3d .signal-glow {
   position: absolute;
@@ -148,11 +149,37 @@
     grid-template-areas: "intro art" "readout readout";
   }
   #clawdy-3d .stage-intro { text-align: left; }
-  #clawdy-3d .art { width: min(37vw, 520px); }
+  #clawdy-3d .art { width: min(42vw, 620px); }
 }
 
 @media (max-width: 700px) {
   #clawdy-3d .readout { grid-template-columns: 1fr auto; gap: 10px; padding: 11px 0 16px; }
   #clawdy-3d .selector { grid-row: 2; grid-column: 1 / -1; justify-self: center; }
   #clawdy-3d .scroll-link { gap: 6px; letter-spacing: .06em; }
+}
+
+#clawdy-3d .art canvas { display: none; }
+
+#clawdy-3d [data-rendered] .art {
+  isolation: isolate;
+}
+
+#clawdy-3d [data-rendered] .art img,
+#clawdy-3d [data-rendered] .signal-glow { display: none; }
+
+#clawdy-3d [data-rendered] .art canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#clawdy-3d [data-rendered] .art::before {
+  position: absolute;
+  inset: 8% 6%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #fff6ed77, transparent 66%);
+  filter: blur(14px);
+  content: "";
 }
