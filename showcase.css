@@ -7,8 +7,6 @@
 
 #clawdy-3d .stage {
   --signal: #a0382c;
-  --tint: #e9ad9e;
-  --wash: #f5e3dd;
   position: sticky;
   isolation: isolate;
   top: 0;
@@ -16,7 +14,25 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 58%, var(--tint), var(--wash) 76%);
+  background: radial-gradient(ellipse at 50% 58%, #e9ad9e, #f5e3dd 76%);
+}
+
+#clawdy-3d .stage::before,
+#clawdy-3d .stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+#clawdy-3d .stage::before {
+  background: radial-gradient(ellipse at 50% 58%, #eac775, #f7ebcf 76%);
+  opacity: var(--amber-mix, 0);
+}
+#clawdy-3d .stage::after {
+  background: radial-gradient(ellipse at 50% 58%, #a4cba7, #e2efe1 76%);
+  opacity: var(--green-mix, 0);
 }
 
 #clawdy-3d .stage-intro {
@@ -64,23 +80,16 @@
 }
 
 #clawdy-3d .art { position: relative; min-height: 0; }
-#clawdy-3d .art .still {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 20px;
-}
+#clawdy-3d .art .still,
 #clawdy-3d .art canvas {
   position: absolute;
   top: 50%;
-  left: calc(50% + var(--model-shift, 0%));
-  width: var(--art-size, 0px);
+  left: 50%;
+  width: var(--art-size, min(100%, 1080px));
   height: auto;
-  transform: translate(-50%, -50%);
-  opacity: 0;
+  transform: translate3d(calc(-50% + var(--model-pan, 0px)), -50%, 0);
 }
+#clawdy-3d .art canvas { opacity: 0; }
 #clawdy-3d .art[data-ready] canvas { opacity: 1; }
 #clawdy-3d .art[data-ready] .still { visibility: hidden; }
 
@@ -140,7 +149,6 @@
   }
   #clawdy-3d [data-signal-phase=working] .stage-intro { right: auto; left: max(6vw, 32px); }
   #clawdy-3d .stage-intro h2 { font-size: clamp(46px, 6vw, 96px); }
-  #clawdy-3d .still { transform: translateX(var(--model-shift, -24%)); }
 }
 
 @media (max-width: 700px) {
