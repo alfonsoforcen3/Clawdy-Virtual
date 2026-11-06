@@ -46,7 +46,7 @@ explicitly, pass `-Runtime win-arm64` on ARM64 or `-Runtime win-x64` on x64.
 The script prints the build directory. Open a new PowerShell window if you
 installed a prerequisite and the current shell still cannot find it. If the
 build, restore or unsigned launch is blocked on a managed PC, use your usual
-IT approval process. Try the [browser demo](https://alfonsoforcen3.github.io/clawd-mascot-3d/#experience)
+IT approval process. Try the [browser demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience)
 while access is pending.
 
 ### Start the simulated tray demo

@@ -1,26 +1,50 @@
-# Virtual Clawdy
+<p align="center">
+  <img src="desktop/macos/Assets/ClawdyProduct.png" width="112" alt="Clawdy mascot and traffic light">
+</p>
 
-A tiny traffic light for local AI coding sessions. Virtual Clawdy lives in the
-macOS menu bar or Windows notification area. Amber means work is in progress,
-green means ready, and red flags a question or error.
+<h1 align="center">Virtual Clawdy</h1>
 
-**Try the sample activity first.** Demo mode runs locally without an AI account,
-a model key, or a device. [Try the browser demo](https://alfonsoforcen3.github.io/clawd-mascot-3d/#experience).
+<p align="center"><strong>See when your AI needs you.</strong></p>
 
-| Platform | Build from source |
+<p align="center">
+  <a href="https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience"><strong>Try the browser demo</strong></a> ·
+  <a href="docs/TRY_VIRTUAL_CLAWDY.md">Build for Mac</a> ·
+  <a href="desktop/windows/README.md">Build for Windows</a>
+</p>
+
+You leave an AI coding agent running. An hour later, you discover it stopped five
+minutes in to ask a question. Clawdy gives you a small traffic light you can
+check at a glance, right in your Mac menu bar or Windows notification area.
+
+<p align="center">
+  <img src="docs/assets/virtual-clawdy-mac-demo.png" width="720" alt="Virtual Clawdy in the Mac menu bar, with a red light and a needs-input card in demo mode">
+</p>
+
+| Signal | What it tells you |
 | --- | --- |
-| macOS 13+ | [Mac setup guide](docs/TRY_VIRTUAL_CLAWDY.md) |
-| Windows 11 x64 or ARM64 | [Windows setup guide](desktop/windows/README.md) |
+| 🟠 Amber | Your agent is working. The status card shows active sessions. |
+| 🟢 Green | Your agent has reported it’s ready. |
+| 🔴 Red | A question or error needs your attention. Supported alerts offer a way back to the chat or app. |
 
-These are source previews. Automated Windows builds and isolated card checks
-complement the remaining hands-on Windows tray testing.
+### Try Clawdy
 
-Live observation reads an existing compatible local status service. This
-repository contains the desktop observer and demo. See
-[local status integration](docs/LOCAL_STATUS.md) for the request and response
-format. Regular browser AI chats do not produce that local status.
+1. [Open the interactive desk demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience) and switch between **Working**, **Done**, and **Your turn**.
+2. Build the desktop preview for [macOS 13+](docs/TRY_VIRTUAL_CLAWDY.md) or [Windows 11 x64 / ARM64](desktop/windows/README.md).
+3. Start in demo mode. It uses sample activity and requires no AI account, API key, or physical Clawdy.
 
-Clawdy also comes as an optional physical desk companion. [See Clawdy and Pro Max](https://alfonsoforcen3.github.io/clawd-mascot-3d/#get-clawdy).
+Live activity requires an existing compatible local status service. The
+[local status guide](docs/LOCAL_STATUS.md) explains how to connect one. Windows
+is a source preview with automated build and fixture coverage. Hands-on Windows
+tray testing is still pending.
 
-Original Virtual Clawdy software is available under the [MIT License](LICENSE).
-[Asset and branding terms](NOTICE.md).
+### Want one on your desk?
+
+Clawdy and Clawdy Pro Max are optional physical desk companions built in Dubai.
+They bring the same traffic lights to your desk, and Pro Max adds a status display.
+[See both desk companions](https://alfonsoforcen3.github.io/Clawdy-Virtual/#get-clawdy).
+
+<a href="https://alfonsoforcen3.github.io/Clawdy-Virtual/#get-clawdy"><img src="https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-real-desk.webp" width="460" alt="Assembled Clawdy desk companions"></a>
+
+Building with an AI coding agent? [Open an issue](https://github.com/alfonsoforcen3/Clawdy-Virtual/issues/new) and tell us when a signal helped or got in your way.
+
+[MIT license for the virtual software](LICENSE) · [Artwork and branding terms](NOTICE.md)
