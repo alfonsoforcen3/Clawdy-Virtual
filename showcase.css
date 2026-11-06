@@ -163,3 +163,32 @@
     transition: background-color .25s ease, box-shadow .25s ease;
   }
 }
+
+#clawdy-3d .art canvas,
+#clawdy-3d .art figcaption { display: none; }
+
+#clawdy-3d [data-views-ready] .art img { visibility: hidden; }
+#clawdy-3d [data-views-ready] .signal-glow { display: none; }
+
+#clawdy-3d [data-views-ready] .art canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+#clawdy-3d [data-views-ready] .art canvas:active { cursor: grabbing; }
+
+#clawdy-3d [data-views-ready] .art figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  display: block;
+  color: var(--ink);
+  font-size: .75rem;
+  text-align: center;
+  pointer-events: none;
+}
