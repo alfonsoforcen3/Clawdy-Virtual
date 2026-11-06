@@ -20,10 +20,17 @@ check at a glance, right in your Mac menu bar or Windows notification area.
 
 ### Watch Clawdy in action
 
-| 17-second demo | 46-second walkthrough |
-| :---: | :---: |
-| [![Play the short Clawdy demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-short-poster.webp)](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film) | [![Play the full Clawdy walkthrough](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-film-poster.webp)](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film) |
-| [Play short demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film) · [Open MP4](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-short-mobile.mp4) | [Play full walkthrough](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film) · [Open MP4](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-launch-mobile.mp4) |
+#### 17-second demo
+
+https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
+
+[Watch on the website](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film)
+
+#### 46-second walkthrough
+
+https://github.com/user-attachments/assets/6b7fc711-e455-431e-a38b-656dfafcf65e
+
+[Watch on the website](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film)
 
 <p align="center">
   <img src="docs/assets/virtual-clawdy-mac-demo.png" width="720" alt="Virtual Clawdy in the Mac menu bar, with a red light and a needs-input card in demo mode">
