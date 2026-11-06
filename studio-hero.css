@@ -1,0 +1,260 @@
+.hero-actions {
+  align-items: flex-start;
+}
+
+.virtual-install {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: min(100%, 46rem);
+  min-width: 0;
+}
+
+.virtual-install[data-enhanced]:not([open]) {
+  display: none;
+}
+
+.virtual-install > summary {
+  display: inline-flex;
+  list-style: none;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.virtual-install > summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-panel {
+  padding: clamp(14px, 3vw, 20px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff8ef;
+  color: var(--muted);
+  font-size: .89rem;
+  line-height: 1.55;
+}
+
+.install-panel p {
+  margin: 0 0 10px;
+}
+
+.install-platform {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffbf6;
+}
+
+.install-platform > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 6px 13px;
+  border-radius: 11px;
+  color: var(--ink);
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.install-platform > summary::-webkit-details-marker {
+  display: none;
+}
+
+.platform-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ead9c9;
+  border-radius: 9px;
+  background: #fff0e0;
+}
+
+.platform-hint {
+  margin-inline-start: auto;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 500;
+}
+
+.platform-chevron {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin: 0 3px 3px 2px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.install-platform[open] {
+  border-color: #ce9a80;
+  padding-bottom: 8px;
+}
+
+.install-platform[open] > summary {
+  background: #fff0e4;
+}
+
+.install-platform[open] .platform-chevron {
+  margin-bottom: -3px;
+  transform: rotate(225deg);
+}
+
+.install-platform > :not(summary) {
+  margin-inline: 10px;
+}
+
+.install-platform .prompt-card {
+  margin-top: 8px;
+}
+
+.prompt-card {
+  overflow: hidden;
+  border: 1px solid #4b3b34;
+  border-radius: 10px;
+  background: #241e20;
+  color: #fff0df;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.prompt-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px 5px 12px;
+  border-bottom: 1px solid #4b3b34;
+  background: #302729;
+}
+
+.prompt-file {
+  color: #eed6c6;
+  font-size: .78rem;
+}
+
+.prompt-file span {
+  color: #f2ab80;
+}
+
+.prompt-copy:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 5.6rem;
+  min-height: 44px;
+  padding: 0 9px;
+  border: 1px solid #87634e;
+  border-radius: 7px;
+  background: #f5c3a4;
+  color: #251c20;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.prompt-copy:not([hidden]):hover {
+  background: #ffe0ca;
+}
+
+.prompt-copy:focus-visible {
+  outline-color: #fff0df;
+}
+
+.install-panel .install-prompt {
+  margin: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: .81rem;
+  line-height: 1.6;
+}
+
+.install-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.install-tools .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.install-copy-status {
+  margin: 0;
+  font-weight: 650;
+}
+
+.install-copy-status:not(:empty) {
+  margin-top: 6px;
+}
+
+.compatibility h2 {
+  margin-bottom: 22px;
+}
+
+.provider-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(6px, 1.5vw, 15px);
+  max-width: 55rem;
+  padding: 0;
+  margin: 0 0 18px;
+  list-style: none;
+}
+
+.provider-strip li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(6px, 1vw, 12px);
+  padding: 14px 6px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff8ef;
+  text-align: center;
+  color: var(--ink);
+  font-size: clamp(.72rem, 1.65vw, .98rem);
+  font-weight: 680;
+  line-height: 1.2;
+}
+
+.provider-strip img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex: none;
+}
+
+.compatibility .compat-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  max-width: none;
+  margin: 0;
+  font-size: .83rem;
+}
+
+.compatibility .compat-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .provider-strip li {
+    flex-direction: column;
+    padding: 10px 3px;
+  }
+
+  .provider-strip img {
+    width: 22px;
+    height: 22px;
+  }
+}

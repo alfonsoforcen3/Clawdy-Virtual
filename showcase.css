@@ -1,0 +1,158 @@
+.clawdy-3d-link { display: inline-block; margin-top: 18px; }
+
+#clawdy-3d .stage {
+  --signal: #a0382c;
+  --glow: #ff675b;
+  --lamp-top: 24.9%;
+  --tint: #e9ad9e;
+  --wash: #f5e3dd;
+  display: grid;
+  grid-template: "intro" auto "art" auto "readout" auto / minmax(0, 1fr);
+  place-items: center;
+  gap: clamp(14px, 3vw, 36px);
+  padding-top: clamp(28px, 6vw, 80px);
+  background: radial-gradient(ellipse at 50% 58%, var(--tint), var(--wash) 76%);
+}
+
+#clawdy-3d [data-signal-phase=working] {
+  --signal: #8d530b;
+  --glow: #ffc65d;
+  --lamp-top: 43.2%;
+  --tint: #f2d397;
+  --wash: #fbefda;
+}
+
+#clawdy-3d [data-signal-phase=ready] {
+  --signal: #276845;
+  --glow: #7deb9c;
+  --lamp-top: 61%;
+  --tint: #add4b5;
+  --wash: #eaf4e9;
+}
+
+#clawdy-3d .stage-intro {
+  grid-area: intro;
+  width: min(100%, 500px);
+  padding-inline: 16px;
+  text-align: center;
+}
+
+#clawdy-3d .stage-intro .eyebrow { display: block; margin: 0 0 8px; }
+
+#clawdy-3d .stage-intro h2 {
+  margin: 0 0 12px;
+  font-size: clamp(40px, 7vw, 96px);
+  font-weight: 480;
+  line-height: 1;
+  letter-spacing: -.075em;
+}
+
+#clawdy-3d em { color: var(--signal); }
+
+#clawdy-3d .stage-bullets {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(.84rem, 1.6vw, 1.125rem);
+  line-height: 1.4;
+  list-style: none;
+}
+
+#clawdy-3d .stage-bullets li::before {
+  display: inline-block;
+  width: .42em;
+  height: .42em;
+  margin: 0 .65em .16em 0;
+  border-radius: 50%;
+  background: var(--signal);
+  content: "";
+}
+
+#clawdy-3d .art {
+  grid-area: art;
+  position: relative;
+  width: min(78vw, 435px);
+  margin: 0;
+}
+
+#clawdy-3d .art img { display: block; width: 100%; height: auto; }
+
+#clawdy-3d .signal-glow {
+  position: absolute;
+  top: var(--lamp-top);
+  left: 24.25%;
+  width: 6%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--glow);
+  box-shadow: 0 0 20px var(--glow);
+  transform: translate(-50%, -50%);
+}
+
+#clawdy-3d .readout {
+  grid-area: readout;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 13px 0 23px;
+  border-top: 1px solid #29292325;
+}
+
+#clawdy-3d .chapter { margin: 0; }
+
+#clawdy-3d #signal-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+#clawdy-3d .selector {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #29292325;
+  border-radius: 40px;
+  background: #f5f1ebbb;
+}
+
+#clawdy-3d .selector button {
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 25px;
+  background: transparent;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+#clawdy-3d .selector button[aria-pressed=true] { background: #fff; box-shadow: 0 1px 5px #29292318; }
+#clawdy-3d .selector i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #ba4c3c; }
+#clawdy-3d .selector button:nth-child(2) i { background: #b87412; }
+#clawdy-3d .selector button:nth-child(3) i { background: #348057; }
+
+#clawdy-3d .scroll-link { justify-self: end; display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 9px; letter-spacing: .14em; line-height: 1.5; }
+#clawdy-3d .scroll-link b { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #29292325; border-radius: 50%; font-size: 17px; font-weight: 400; }
+
+@media (min-width: 850px) {
+  #clawdy-3d .stage {
+    grid-template: "art intro" auto "readout readout" auto / minmax(0, 1fr) minmax(0, 1fr);
+    padding-inline: 5vw;
+  }
+  #clawdy-3d [data-signal-phase=working] {
+    grid-template-areas: "intro art" "readout readout";
+  }
+  #clawdy-3d .stage-intro { text-align: left; }
+  #clawdy-3d .art { width: min(37vw, 520px); }
+}
+
+@media (max-width: 700px) {
+  #clawdy-3d .readout { grid-template-columns: 1fr auto; gap: 10px; padding: 11px 0 16px; }
+  #clawdy-3d .selector { grid-row: 2; grid-column: 1 / -1; justify-self: center; }
+  #clawdy-3d .scroll-link { gap: 6px; letter-spacing: .06em; }
+}
