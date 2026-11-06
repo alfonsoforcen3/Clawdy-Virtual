@@ -1,0 +1,2 @@
+ClawdyProduct.png is the Clawdy brand illustration bundled with the desktop
+status card. Its use is described in the root NOTICE.md.

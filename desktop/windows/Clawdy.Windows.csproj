@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Clawdy.Windows</AssemblyName>
+    <RootNamespace>Clawdy.Windows</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefaultItemExcludes>$(DefaultItemExcludes);ProtocolChecks/**;RuntimeChecks/**;Validation/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="ProtocolChecks/**/*.cs" />
+    <Compile Remove="Validation/**/*.cs" />
+    <Compile Remove="RuntimeChecks/**/*.cs" />
+    <Resource Include="../macos/Assets/ClawdyProduct.png" Link="Assets/ClawdyProduct.png" />
+    <Content Include="../../scripts/virtual_clawdy.py" Link="collector/virtual_clawdy.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/status_core.py" Link="collector/status_core.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/local_chat_routes.py" Link="collector/local_chat_routes.py" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

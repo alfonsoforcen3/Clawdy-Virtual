@@ -1,0 +1,86 @@
+name: Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  regression:
+    name: Regression tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            python: '3.9'
+          - os: ubuntu-latest
+            python: '3.12'
+          - os: windows-latest
+            python: '3.12'
+          - os: macos-14
+            python: '3.12'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run hardware-free regressions
+        run: python -m unittest discover -s tests -v
+  native-macos:
+    name: Native macOS prototype build and fixtures
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build macOS preview
+        run: bash desktop/macos/build.sh
+      - name: Run native hardware-free fixtures
+        shell: bash
+        run: |
+          app="$HOME/Library/Caches/ClawdyPrototype/Build/VirtualClawdy.app/Contents/MacOS"
+          "$app/VirtualClawdy" --self-test
+          "$app/VirtualClawdy" --attention-self-test
+          "$app/ClawdyRenderer" --self-test
+  native-windows:
+    name: Windows prototype compile and hardware-free fixtures
+    timeout-minutes: 15
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run portable policy and protocol fixtures
+        shell: pwsh
+        run: |
+          dotnet run --project desktop/windows/Validation/Clawdy.PolicyChecks.csproj
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet run --project desktop/windows/ProtocolChecks/Clawdy.ProtocolChecks.csproj
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run isolated collector lifecycle checks
+        shell: pwsh
+        run: |
+          dotnet run --project desktop/windows/RuntimeChecks/Clawdy.RuntimeChecks.csproj -- --python python
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet run --no-build --project desktop/windows/RuntimeChecks/Clawdy.RuntimeChecks.csproj -- --python py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run isolated Windows WPF card fixtures
+        shell: pwsh
+        run: |
+          dotnet run --project desktop/windows/Validation/UiChecks/Clawdy.UiChecks.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build Windows previews
+        shell: pwsh
+        run: |
+          ./desktop/windows/build.ps1 -Runtime win-x64
+          ./desktop/windows/build.ps1 -Runtime win-arm64
