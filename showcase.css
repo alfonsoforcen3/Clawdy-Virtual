@@ -192,3 +192,24 @@
   text-align: center;
   pointer-events: none;
 }
+
+#clawdy-3d:not([data-scroll-motion]) .scroll-hint { display: none; }
+
+@media (prefers-reduced-motion: no-preference) and (min-height: 501px) {
+  #clawdy-3d[data-scroll-motion] { min-height: 305svh; }
+
+  #clawdy-3d[data-scroll-motion] .stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding-top: clamp(16px, 4svh, 48px);
+  }
+
+  #clawdy-3d[data-scroll-motion] .art { width: min(78vw, 435px, 55svh); }
+
+  @media (min-width: 850px) {
+    #clawdy-3d[data-scroll-motion] .stage { grid-template-rows: minmax(0, 1fr) auto; }
+    #clawdy-3d[data-scroll-motion] .art { width: min(37vw, 520px, 74svh); }
+  }
+}
