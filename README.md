@@ -6,6 +6,8 @@
 
 <p align="center"><strong>See when your AI needs you.</strong></p>
 
+<h2 align="center"><a href="https://alfonsoforcen3.github.io/Clawdy-Virtual/">Visit the Clawdy website ↗</a></h2>
+
 <p align="center">
   <a href="https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience"><strong>Try the browser demo</strong></a> ·
   <a href="docs/TRY_VIRTUAL_CLAWDY.md">Build for Mac</a> ·
@@ -15,6 +17,13 @@
 You leave an AI coding agent running. An hour later, you discover it stopped five
 minutes in to ask a question. Clawdy gives you a small traffic light you can
 check at a glance, right in your Mac menu bar or Windows notification area.
+
+### Watch Clawdy in action
+
+| 17-second demo | 46-second walkthrough |
+| :---: | :---: |
+| [![Play the short Clawdy demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-short-poster.webp)](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film) | [![Play the full Clawdy walkthrough](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-film-poster.webp)](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film) |
+| [Play short demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film) · [Open MP4](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-short-mobile.mp4) | [Play full walkthrough](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film) · [Open MP4](https://alfonsoforcen3.github.io/Clawdy-Virtual/assets/clawdy-launch-mobile.mp4) |
 
 <p align="center">
   <img src="docs/assets/virtual-clawdy-mac-demo.png" width="720" alt="Virtual Clawdy in the Mac menu bar, with a red light and a needs-input card in demo mode">
