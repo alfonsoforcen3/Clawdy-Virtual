@@ -22,13 +22,13 @@ check at a glance, right in your Mac menu bar or Windows notification area.
 
 #### 17-second demo
 
-https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
+https://github.com/user-attachments/assets/6b7fc711-e455-431e-a38b-656dfafcf65e
 
 [Watch on the website](https://alfonsoforcen3.github.io/Clawdy-Virtual/#hero-film)
 
 #### 46-second walkthrough
 
-https://github.com/user-attachments/assets/6b7fc711-e455-431e-a38b-656dfafcf65e
+https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
 
 [Watch on the website](https://alfonsoforcen3.github.io/Clawdy-Virtual/#film)
 
