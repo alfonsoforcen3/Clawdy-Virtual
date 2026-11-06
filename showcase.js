@@ -1,19 +1,7 @@
 const showcase = document.querySelector('#clawdy-3d .stage');
 const art = showcase.querySelector('.art');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-let drawSignal;
-let selectedSignal = 0;
-
-new IntersectionObserver((entries, observer) => {
-  if (!entries.some(entry => entry.isIntersecting)) return;
-  observer.disconnect();
-  import('./signal-renderer.js?v=890d9bbe').then(({ mountSignalScene }) => {
-    drawSignal = mountSignalScene(art, showcase, reducedMotion);
-    drawSignal?.(selectedSignal, false);
-  }).catch(() => {
-    // The illustration and signal controls remain available without WebGL.
-  });
-}).observe(showcase);
+let motion;
 
 const signalButtons = [...showcase.querySelectorAll('[data-phase]')];
 const signalPanels = [...showcase.querySelectorAll('[data-panel]')];
@@ -27,8 +15,9 @@ const signalPhases = [
 signalButtons.forEach((button, index) => {
   button.addEventListener('click', () => {
     const phase = signalPhases[index];
-    if (index !== selectedSignal) drawSignal?.(index);
-    selectedSignal = index;
+    if (showcase.dataset.signalPhase === phase.name) return;
+    const from = art.getBoundingClientRect();
+    motion?.cancel();
     showcase.dataset.signalPhase = phase.name;
     signalIndex.textContent = phase.label;
     signalButtons.forEach((option, optionIndex) => {
@@ -37,5 +26,15 @@ signalButtons.forEach((button, index) => {
     signalPanels.forEach((panel, panelIndex) => {
       panel.hidden = panelIndex !== index;
     });
+    if (reducedMotion.matches || !art.animate) return;
+
+    const to = art.getBoundingClientRect();
+    const shift = from.left - to.left;
+    const tilt = shift > 0 ? -13 : 13;
+    motion = art.animate([
+      { transform: 'translateX(' + shift + 'px)', filter: 'blur(0)' },
+      { offset: .43, transform: 'translateX(' + shift * .35 + 'px) perspective(650px) rotateY(' + tilt + 'deg) scale(.98)', filter: 'blur(2.5px)' },
+      { transform: 'translateX(0) perspective(650px) rotateY(0)', filter: 'blur(0)' }
+    ], { duration: 550, easing: 'cubic-bezier(.2,.7,.24,1)' });
   });
 });
