@@ -1,171 +1,159 @@
 const story = document.querySelector('#clawdy-3d');
-const showcase = story.querySelector('.stage');
-const art = showcase.querySelector('.art');
+const stage = story.querySelector('.stage');
+const art = stage.querySelector('.art');
 const canvas = art.querySelector('canvas');
-const context = canvas.getContext('2d');
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const signalButtons = [...showcase.querySelectorAll('[data-phase]')];
-const signalPanels = [...showcase.querySelectorAll('[data-panel]')];
-const signalIndex = showcase.querySelector('#phase-index');
+const ctx = canvas.getContext('2d');
+const panels = [...stage.querySelectorAll('[data-panel]')];
+const buttons = [...stage.querySelectorAll('[data-phase]')];
+const phaseIndex = stage.querySelector('#phase-index');
+const progress = stage.querySelector('.progress i');
 
-const viewSize = 420;
-const viewsPerRow = 7;
-const viewsPerTurn = 42;
-const scrollMotion = matchMedia('(prefers-reduced-motion: no-preference) and (min-height: 501px)');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const compact = matchMedia('(max-height: 500px)');
+const wide = matchMedia('(min-width: 900px) and (min-height: 650px) and (min-aspect-ratio: 4/3)');
 const phases = [
-  {name: 'attention', label: '01 / YOUR TURN'},
-  {name: 'working', label: '02 / WORKING'},
-  {name: 'ready', label: '03 / READY'}
+  {key: 'attention', label: 'YOUR TURN', ink: '#a0382c', tint: '#e9ad9e', wash: '#f5e3dd'},
+  {key: 'working', label: 'WORKING', ink: '#80500a', tint: '#eac775', wash: '#f7ebcf'},
+  {key: 'ready', label: 'READY', ink: '#296442', tint: '#a4cba7', wash: '#e2efe1'}
 ];
-let phaseIndex = 0;
-let view = 0;
-let scrollProgress;
-let scrollFrame;
-let settle;
-let motion;
-let frame;
-let drag;
-
-function paintFrame(image, position, opacity = 1) {
-  const index = ((Math.round(position) % viewsPerTurn) + viewsPerTurn) % viewsPerTurn;
-  const x = index % viewsPerRow * viewSize;
-  const y = Math.floor(index / viewsPerRow) * viewSize;
-  context.globalAlpha = opacity;
-  context.drawImage(image, x, y, viewSize, viewSize, 0, 0, viewSize, viewSize);
-}
-
-function draw(trail) {
-  const image = phases[phaseIndex].image;
-  if (!context || !image) {
-    showcase.removeAttribute('data-views-ready');
-    return;
-  }
-
-  context.clearRect(0, 0, viewSize, viewSize);
-  if (trail !== undefined && Math.round(trail) !== Math.round(view)) paintFrame(image, trail, .33);
-  paintFrame(image, view);
-  showcase.setAttribute('data-views-ready', '');
-}
-
+const sheets = new Map();
+const tile = canvas.width;
+const views = 42;
 const clamp = value => Math.max(0, Math.min(1, value));
 const smooth = value => value * value * (3 - 2 * value);
-const travel = () => Math.max(1, story.offsetHeight - showcase.offsetHeight);
+const staticStage = () => reduced.matches || compact.matches;
+const travel = () => Math.max(1, story.offsetHeight - stage.offsetHeight);
+let selected = 0, shown = -1, pose = 0, target = 0, last = 0, frame = 0, visible = true;
+let winkStarted = null;
+let lastPaint;
 
-function setView(next, withTrail = true) {
-  const previous = view;
-  view = next;
-  draw(withTrail && !reducedMotion.matches ? previous : undefined);
-  clearTimeout(settle);
-  if (withTrail && !reducedMotion.matches) settle = setTimeout(() => draw(), 85);
+function read() {
+  target = staticStage() ? selected / 2 : clamp(-story.getBoundingClientRect().top / travel());
 }
 
-function updateScroll() {
-  scrollFrame = 0;
-  if (!scrollMotion.matches) return;
-
-  const progress = clamp(-story.getBoundingClientRect().top / travel());
-  if (progress === scrollProgress) return;
-  const moved = scrollProgress !== undefined;
-  scrollProgress = progress;
-  showPhase(progress < .25 ? 0 : progress < .75 ? 1 : 2, moved);
-  const turn = Math.min(1, Math.floor(progress * 2));
-  const blend = smooth(clamp((progress * 2 - turn - .25) / .5));
-  if (!drag) setView((turn + blend) * viewsPerTurn, moved);
+function schedule() {
+  if (!frame && visible && !document.hidden) frame = requestAnimationFrame(tick);
 }
 
-function scheduleScroll() {
-  if (scrollMotion.matches && !scrollFrame) scrollFrame = requestAnimationFrame(updateScroll);
+function paint(sheet, index, opacity = 1) {
+  ctx.globalAlpha = opacity;
+  ctx.drawImage(sheet, (index % 7) * tile, Math.floor(index / 7) * tile, tile, tile, 0, 0, tile, tile);
 }
 
-function updateScrollMode() {
-  story.toggleAttribute('data-scroll-motion', scrollMotion.matches);
-  scrollProgress = undefined;
-  motion?.cancel();
-  if (scrollMotion.matches) scheduleScroll();
-  else setView(0, false);
+function draw(phase, interval, blend, angle, wink) {
+  const view = Math.round(angle * views) % views;
+  const from = sheets.get(phases[interval].key);
+  const to = sheets.get(phases[interval + 1].key);
+  const active = sheets.get(phases[phase].key);
+  if (!active) {
+    art.removeAttribute('data-ready');
+    return;
+  }
+  if (lastPaint?.view === view && lastPaint.blend === blend && lastPaint.wink === wink && lastPaint.active === active && lastPaint.from === from && lastPaint.to === to) return;
+  lastPaint = {view, blend, wink, active, from, to};
+  ctx.clearRect(0, 0, tile, tile);
+  if (wink && sheets.has('wink')) paint(sheets.get('wink'), wink);
+  else if (from && to && blend > 0 && blend < 1) {
+    paint(from, view);
+    paint(to, view, blend);
+  } else paint(active, view);
+  art.setAttribute('data-ready', '');
+}
+
+function update(now) {
+  const phase = pose < .25 ? 0 : pose < .75 ? 1 : 2;
+  if (phase !== shown) {
+    shown = phase;
+    stage.dataset.signalPhase = phases[phase].key;
+    phaseIndex.textContent = '0' + (phase + 1) + ' / ' + phases[phase].label;
+    panels.forEach((panel, index) => { panel.hidden = index !== phase; });
+    buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === phase)));
+  }
+
+  const interval = Math.min(1, Math.floor(pose * 2));
+  const blend = smooth(clamp((pose * 2 - interval - .25) / .5));
+  for (const [property, color] of [['--tint', 'tint'], ['--wash', 'wash'], ['--signal', 'ink']]) {
+    const from = phases[interval][color];
+    const to = phases[interval + 1][color];
+    const mix = 'color-mix(in srgb-linear, ' + from + ', ' + to + ' ' + blend * 100 + '%)';
+    stage.style.setProperty(property, CSS.supports('color', mix) ? mix : phases[phase][color]);
+  }
+  progress.style.transform = 'scaleX(' + pose + ')';
+  const split = wide.matches && !staticStage();
+  const shift = split ? (interval === 0 ? -1 + 2 * blend : 1 - 2 * blend) : 0;
+  art.style.setProperty('--model-shift', shift * 24 + '%');
+  stage.style.setProperty('--story-copy', smooth(Math.abs(2 * blend - 1)));
+
+  if (staticStage() || phase !== 2) winkStarted = null;
+  else if (pose >= .985 && winkStarted === null && sheets.has('wink')) winkStarted = now;
+  const winkTime = winkStarted === null ? 1 : clamp((now - winkStarted) / 480);
+  const wink = Math.round(6 * smooth(1 - Math.abs(2 * winkTime - 1)));
+  if (ctx) draw(phase, interval, blend, staticStage() ? 0 : interval + blend, wink);
+}
+
+function tick(now) {
+  frame = 0;
+  const dt = last ? Math.min(.064, (now - last) / 1000) : .016;
+  last = now;
+  pose = staticStage() ? target : pose + (target - pose) * (1 - Math.exp(-dt * 14));
+  if (Math.abs(target - pose) < .0002) pose = target;
+  update(now);
+  if (pose !== target || (winkStarted !== null && now - winkStarted < 480)) schedule();
+  else last = 0;
+}
+
+function resize() {
+  const horizontal = wide.matches && !staticStage() ? .168 : .093;
+  // Match the archived orthographic camera using the baked square view.
+  const artSize = .126 * Math.min(art.clientHeight / .079, art.clientWidth / horizontal);
+  art.style.setProperty('--art-size', artSize + 'px');
+  read();
+  schedule();
 }
 
 function loadViews() {
-  for (const phase of phases) {
+  if (!ctx) return;
+  for (const key of [...phases.map(phase => phase.key), 'wink']) {
     const image = new Image();
-    image.src = new URL('./assets/showcase-' + phase.name + '.webp?v=2', document.baseURI).href;
+    image.src = new URL('./assets/showcase-' + key + '.webp?v=stage-2', document.baseURI).href;
     image.decode().then(() => {
-      phase.image = image;
-      if (phases[phaseIndex] === phase) {
-        draw();
-      }
-    }).catch(() => {
-      // The illustrated fallback and signal controls remain usable.
-    });
+      if (image.naturalWidth !== 7 * tile || image.naturalHeight !== (key === 'wink' ? tile : 6 * tile)) return;
+      sheets.set(key, image);
+      schedule();
+    }).catch(() => { /* The original still remains available. */ });
   }
 }
 
-if (context && 'IntersectionObserver' in window) {
-  const observer = new IntersectionObserver(entries => {
-    if (!entries.some(entry => entry.isIntersecting)) return;
-    observer.disconnect();
+buttons.forEach((button, index) => button.addEventListener('click', () => {
+  selected = index;
+  if (staticStage()) {
+    read();
+    schedule();
+    return;
+  }
+  const top = story.getBoundingClientRect().top + scrollY + travel() * index / 2;
+  window.scrollTo({top, behavior: 'smooth'});
+}));
+
+addEventListener('scroll', () => { read(); schedule(); }, {passive: true});
+for (const query of [reduced, compact, wide]) query.addEventListener('change', resize);
+document.addEventListener('visibilitychange', schedule);
+new ResizeObserver(resize).observe(art);
+const observer = new IntersectionObserver(([entry]) => {
+  visible = entry.isIntersecting;
+  if (visible) {
+    read();
+    schedule();
+  }
+});
+observer.observe(stage);
+const loader = new IntersectionObserver(([entry]) => {
+  if (entry.isIntersecting) {
+    loader.disconnect();
     loadViews();
-  }, {rootMargin: '160px'});
-  observer.observe(showcase);
-} else if (context) {
-  loadViews();
-}
-
-function showPhase(index, animate = false) {
-  if (phaseIndex === index) return;
-  motion?.cancel();
-  const left = animate ? art.getBoundingClientRect().left : 0;
-  phaseIndex = index;
-  const phase = phases[index];
-  showcase.dataset.signalPhase = phase.name;
-  signalIndex.textContent = phase.label;
-  signalButtons.forEach((option, optionIndex) => {
-    option.setAttribute('aria-pressed', String(optionIndex === index));
-  });
-  signalPanels.forEach((panel, panelIndex) => {
-    panel.hidden = panelIndex !== index;
-  });
-  draw();
-  if (!animate || !art.animate) return;
-
-  const shift = left - art.getBoundingClientRect().left;
-  if (shift) motion = art.animate([
-    {transform: 'translateX(' + shift + 'px)'},
-    {transform: 'translateX(0)'}
-  ], {duration: 480, easing: 'cubic-bezier(.2,.7,.24,1)'});
-}
-
-signalButtons.forEach((button, index) => {
-  button.addEventListener('click', () => {
-    if (scrollMotion.matches) {
-      const top = story.getBoundingClientRect().top + scrollY + travel() * index / 2;
-      window.scrollTo({top, behavior: 'smooth'});
-    } else {
-      showPhase(index);
-      setView(0, false);
-    }
-  });
-});
-
-canvas.addEventListener('pointerdown', event => {
-  if (!event.isPrimary || event.button !== 0) return;
-  drag = {id: event.pointerId, x: event.clientX, view};
-  canvas.setPointerCapture(event.pointerId);
-});
-canvas.addEventListener('pointermove', event => {
-  if (drag?.id !== event.pointerId) return;
-  setView(drag.view + (event.clientX - drag.x) / 8);
-});
-canvas.addEventListener('lostpointercapture', () => {
-  drag = null;
-  draw();
-});
-canvas.addEventListener('keydown', event => {
-  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-  event.preventDefault();
-  setView(view + (event.key === 'ArrowLeft' ? -1 : 1), false);
-});
-scrollMotion.addEventListener('change', updateScrollMode);
-addEventListener('scroll', scheduleScroll, {passive: true});
-addEventListener('resize', scheduleScroll, {passive: true});
-updateScrollMode();
+  }
+}, {rootMargin: '300px'});
+loader.observe(stage);
+read();
+pose = target;
+update(performance.now());
