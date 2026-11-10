@@ -5,7 +5,7 @@ public sealed record CardAction(string Kind, string Provider, Uri? Target)
 {
     public string Label => Kind == "chat" ? "Open chat" : Provider switch
     {
-        "codex" => "Open Codex", "cursor" => "Open Cursor", _ => "Open Terminal"
+        "codex" => "Open in ChatGPT", "cursor" => "Open Cursor", _ => "Open Terminal"
     };
     public string Identity => Kind == "chat" ? "chat:" + Target?.AbsolutePath :
         Provider is "claude" or "gemini" ? "app:terminal" : "app:" + Provider;

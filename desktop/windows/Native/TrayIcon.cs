@@ -40,18 +40,18 @@ public sealed class TrayIcon : IDisposable
         Api.WTSRegisterSessionNotification(_window.Handle, 0);
     }
 
-    public void Update(StatusSnapshot value, bool reduceMotion, long second)
+    public void Update(StatusSnapshot value, BlinkState finishBlink, bool reduceMotion, long second)
     {
         if (_disposed) return;
         var blink = value.State == "attention" && !reduceMotion && second % 2 != 0;
-        var signature = value.State + ":" + value.WorkingCount + ":" + blink;
+        var signature = $"{value.State}:{value.WorkingCount}:{blink}:{finishBlink.IsBlinking}:{finishBlink.GreenPhaseOn}:{finishBlink.KeepAmberOn}:{finishBlink.AllFinished}";
         var names = string.Join(", ", value.Providers.Select(Name));
         var tip = $"Clawdy {(value.Demo ? "DEMO" : "reported")}: {value.State}. {value.WorkingCount} WIP. {names}";
         if (!value.Demo) tip += ". Session liveness unconfirmed.";
         tip = tip[..Math.Min(127, tip.Length)];
         if (_signature != signature)
         {
-            var icon = Draw(value, blink);
+            var icon = Draw(value, finishBlink, blink);
             var old = _icon; _icon = icon; _signature = signature;
             _tip = tip; ModifyOrAdd();
             if (old != IntPtr.Zero) Api.DestroyIcon(old);
@@ -145,19 +145,103 @@ public sealed class TrayIcon : IDisposable
     public static bool MayAutomaticallyNotify() => Api.SHQueryUserNotificationState(out var state) == 0 && state == 5;
     public void PrepareContextMenu() => Api.SetForegroundWindow(_handle);
 
-    private static IntPtr Draw(StatusSnapshot snapshot, bool blinkOff)
+    private static IntPtr Draw(StatusSnapshot snapshot, BlinkState finishBlink, bool blinkOff)
     {
         const int size = 32;
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
         {
-            drawing.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(30, 33, 39)), null, new Rect(0, 5, 32, 22), 6, 6);
-            var active = snapshot.State switch { "attention" when !blinkOff => 0, "error" => 0, "working" => 1, "ready" => 2, _ => -1 };
-            Color[] colors = [Color.FromRgb(235, 98, 89), Color.FromRgb(239, 181, 61), Color.FromRgb(82, 190, 133)];
-            for (var index = 0; index < 3; index++)
+            Color redColor = Color.FromRgb(255, 75, 75);
+            Color amberColor = Color.FromRgb(255, 185, 35);
+            Color greenColor = Color.FromRgb(50, 220, 130);
+
+            if (finishBlink.IsBlinking)
             {
-                var color = index == active ? colors[index] : Color.FromRgb(72, 75, 81);
-                drawing.DrawEllipse(new SolidColorBrush(color), null, new Point(6 + index * 10, 16), 3.8, 3.8);
+                if (finishBlink.KeepAmberOn)
+                {
+                    // Others still working: 3-lamp pill with Amber solid ON and Green flashing!
+                    var pillPen = new Pen(new SolidColorBrush(Color.FromArgb(90, 255, 255, 255)), 1.0);
+                    drawing.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(22, 25, 31)), pillPen, new Rect(0.5, 1.5, 31, 29), 8, 8);
+
+                    // Red (inactive)
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(62, 66, 75)), null, new Point(6.0, 16.0), 4.3, 4.3);
+
+                    // Amber (solid ON)
+                    var amberCenter = new Point(16.0, 16.0);
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(85, amberColor.R, amberColor.G, amberColor.B)), null, amberCenter, 7.2, 7.2);
+                    drawing.DrawEllipse(new SolidColorBrush(amberColor), null, amberCenter, 5.4, 5.4);
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(160, 255, 255, 255)), null, new Point(amberCenter.X - 1.2, amberCenter.Y - 1.2), 1.6, 1.6);
+
+                    // Green (blinking ON/OFF)
+                    var greenCenter = new Point(26.0, 16.0);
+                    if (finishBlink.GreenPhaseOn)
+                    {
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(85, greenColor.R, greenColor.G, greenColor.B)), null, greenCenter, 7.2, 7.2);
+                        drawing.DrawEllipse(new SolidColorBrush(greenColor), null, greenCenter, 5.4, 5.4);
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(160, 255, 255, 255)), null, new Point(greenCenter.X - 1.2, greenCenter.Y - 1.2), 1.6, 1.6);
+                    }
+                    else
+                    {
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(62, 66, 75)), null, greenCenter, 4.3, 4.3);
+                    }
+                }
+                else
+                {
+                    // All finished: Giant Green Beacon flashes ON / OFF 3 times!
+                    var center = new Point(16.0, 16.0);
+                    var bezelPen = new Pen(new SolidColorBrush(Color.FromArgb(100, 255, 255, 255)), 1.2);
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(18, 20, 26)), bezelPen, center, 14.8, 14.8);
+
+                    if (finishBlink.GreenPhaseOn)
+                    {
+                        var haloColor = Color.FromArgb(80, greenColor.R, greenColor.G, greenColor.B);
+                        drawing.DrawEllipse(new SolidColorBrush(haloColor), null, center, 13.0, 13.0);
+                        drawing.DrawEllipse(new SolidColorBrush(greenColor), null, center, 10.5, 10.5);
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(170, 255, 255, 255)), null, new Point(12.8, 12.8), 3.2, 3.2);
+                    }
+                    else
+                    {
+                        // Dim state during blink OFF phase
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(40, 70, 50)), null, center, 8.0, 8.0);
+                    }
+                }
+            }
+            else
+            {
+                var active = snapshot.State switch { "attention" when !blinkOff => 0, "error" => 0, "working" => 1, "ready" => 2, _ => -1 };
+                Color[] colors = [redColor, amberColor, greenColor];
+
+                if (active >= 0)
+                {
+                    // SINGLE GIANT GLOWING LAMP BEACON (Fills the entire taskbar slot for maximum visibility)
+                    var activeColor = colors[active];
+                    var center = new Point(16.0, 16.0);
+
+                    // Outer high-contrast dark bezel
+                    var bezelPen = new Pen(new SolidColorBrush(Color.FromArgb(100, 255, 255, 255)), 1.2);
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(18, 20, 26)), bezelPen, center, 14.8, 14.8);
+
+                    // Outer radial glow halo
+                    var haloColor = Color.FromArgb(80, activeColor.R, activeColor.G, activeColor.B);
+                    drawing.DrawEllipse(new SolidColorBrush(haloColor), null, center, 13.0, 13.0);
+
+                    // Main vivid traffic light lamp
+                    drawing.DrawEllipse(new SolidColorBrush(activeColor), null, center, 10.5, 10.5);
+
+                    // 3D lens specular highlight for rich hardware appearance
+                    drawing.DrawEllipse(new SolidColorBrush(Color.FromArgb(170, 255, 255, 255)), null, new Point(12.8, 12.8), 3.2, 3.2);
+                }
+                else
+                {
+                    // Standby pill with 3 larger dots when idle / disconnected
+                    var pillPen = new Pen(new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)), 1.0);
+                    drawing.DrawRoundedRectangle(new SolidColorBrush(Color.FromRgb(22, 25, 31)), pillPen, new Rect(0.5, 1.5, 31, 29), 8, 8);
+                    for (var index = 0; index < 3; index++)
+                    {
+                        var center = new Point(6.0 + index * 10.0, 16.0);
+                        drawing.DrawEllipse(new SolidColorBrush(Color.FromRgb(62, 66, 75)), null, center, 4.3, 4.3);
+                    }
+                }
             }
         }
         var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32); bitmap.Render(visual);

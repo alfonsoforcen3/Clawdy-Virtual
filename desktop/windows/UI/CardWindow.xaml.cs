@@ -231,7 +231,7 @@ public sealed partial class CardWindow : Window
             {
                 if (!_buttons.TryGetValue(action.Identity, out var button))
                 {
-                    button = new Button { Width = 91, Height = 28, Margin = new Thickness(0, 0, 6, 0), Tag = action.Identity };
+                    button = new Button { Width = 110, Height = 28, Margin = new Thickness(0, 0, 6, 0), Tag = action.Identity };
                     button.Click += async (_, _) =>
                     {
                         var current = _policy.Actions.FirstOrDefault(candidate => candidate.Identity == button.Tag as string);
@@ -240,8 +240,8 @@ public sealed partial class CardWindow : Window
                     _buttons[action.Identity] = button;
                 }
                 button.Content = action.Kind == "chat" && chatCount > 1 ? "Open chat " + (++number) : action.Label;
-                button.ToolTip = action.Kind == "chat" ? "Open this verified local Codex chat." : action.Provider is "claude" or "gemini"
-                    ? "Open Terminal. Select the relevant CLI session yourself." : "Open the app and select the relevant chat.";
+                button.ToolTip = action.Kind == "chat" ? "Open this specific chat in ChatGPT desktop app." : action.Provider is "claude" or "gemini"
+                    ? "Bring active Terminal window to front." : "Open the app and select the relevant chat.";
                 AutomationProperties.SetHelpText(button, button.ToolTip?.ToString() ?? string.Empty);
                 ActionRow.Children.Add(button);
             }
@@ -251,7 +251,7 @@ public sealed partial class CardWindow : Window
     }
     private async Task InvokeAction(CardAction action)
     {
-        if (_policy.Displayed.Demo || !_policy.Actions.Contains(action)
+        if (!_policy.Actions.Contains(action)
             || !_admission.TryBegin(_policy.ActionVersion, _presentationVersion, out var ticket)) return;
         SetActionButtonsEnabled();
         _actionFailure = null; Render();
@@ -265,12 +265,12 @@ public sealed partial class CardWindow : Window
             _actionFailure = action.Kind == "chat" ? "Couldn’t open chat" : "Couldn’t open the app";
             _failureVersion = _policy.ActionVersion; HeadingText.Text = _actionFailure;
             AutomationProperties.SetName(HeadingText, HeadingText.Text);
-            if (!_policy.IsRecent) FooterText.Text = "Try opening the app directly.";
+            if (!_policy.IsRecent) FooterText.Text = "Try switching to the app directly.";
         }
     }
     private void SetActionButtonsEnabled()
     {
-        foreach (var button in _buttons.Values) button.IsEnabled = !_admission.Busy && !_policy.Displayed.Demo;
+        foreach (var button in _buttons.Values) button.IsEnabled = !_admission.Busy;
     }
     private DispatcherTimer Once(TimeSpan interval, Action action)
     {

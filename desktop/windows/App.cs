@@ -46,18 +46,23 @@ internal sealed class TrayHost : IAsyncDisposable
     private readonly CollectorSupervisor _collector;
     private readonly TrayIcon _tray;
     private readonly CardWindow _card;
+    private readonly DesktopPillWindow _desktopPill;
+    private readonly SessionFinishTracker _finishTracker = new();
     private readonly DispatcherTimer _tick;
     private StatusSnapshot _snapshot = StatusSnapshot.Offline();
     private StatusSnapshot? _displayed;
     private long _received = Stopwatch.GetTimestamp();
-    private bool _manualReducedMotion, _reducedMotion, _sessionActive = true, _hovered, _closed, _disposed;
+    private bool _manualReducedMotion, _reducedMotion, _sessionActive = true, _hovered, _showDesktopPill = true, _closed, _disposed;
     private ContextMenu? _menu;
     public TrayHost(Application app, string python, bool demo)
     {
         _app = app;
         _collector = new(python, Path.Combine(AppContext.BaseDirectory, "collector", "virtual_clawdy.py"), demo);
         _tray = new TrayIcon(); _card = new CardWindow(ActionLauncher.LaunchAsync);
-        _reducedMotion = !SystemParameters.ClientAreaAnimation; _card.SetReducedMotion(_reducedMotion);
+        _desktopPill = new DesktopPillWindow(() => ShowCard(false));
+        _reducedMotion = !SystemParameters.ClientAreaAnimation;
+        _card.SetReducedMotion(_reducedMotion);
+        _desktopPill.SetReducedMotion(_reducedMotion);
         SystemParameters.StaticPropertyChanged += SystemPreferenceChanged;
         _card.EnableExactChatActions(ActionLauncher.HasProtocol("codex"));
         _card.AutoOpenRequested += (_, _) =>
@@ -80,6 +85,7 @@ internal sealed class TrayHost : IAsyncDisposable
         _tray.PlacementChanged += () => { if (_card.IsVisible && _sessionActive) ShowCard(false); };
         _tick = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         _tick.Tick += (_, _) => Tick();
+        _desktopPill.Show();
     }
     public void Start() { _collector.Start(); _tick.Start(); Tick(); }
     private void Tick()
@@ -95,7 +101,12 @@ internal sealed class TrayHost : IAsyncDisposable
         // Never dispatch historical snapshots or terminal action requests to an app.
         if (_displayed is null || !SamePresentation(_displayed, presented) || _card.HasDeferredAttention)
         { _displayed = presented; _card.Update(presented); }
-        _tray.Update(presented, _reducedMotion, (long)(now / (double)Stopwatch.Frequency));
+        var nowTicks = Stopwatch.GetTimestamp();
+        _finishTracker.Update(presented, nowTicks);
+        var blinkState = _finishTracker.GetBlinkState(nowTicks);
+        var second = (long)(now / (double)Stopwatch.Frequency);
+        _tray.Update(presented, blinkState, _reducedMotion, second);
+        if (_showDesktopPill) _desktopPill.Update(presented, blinkState, second);
         var placement = _tray.Placement();
         var hover = _sessionActive && _menu?.IsOpen != true && _tray.IsPointerOver(placement.PhysicalAnchor);
         if (hover != _hovered) SetHover(hover);
@@ -110,6 +121,7 @@ internal sealed class TrayHost : IAsyncDisposable
         if (_closed) return;
         _reducedMotion = _manualReducedMotion || !SystemParameters.ClientAreaAnimation;
         _card.SetReducedMotion(_reducedMotion);
+        _desktopPill.SetReducedMotion(_reducedMotion);
     }
     private void SetHover(bool hovered)
     {
@@ -144,6 +156,12 @@ internal sealed class TrayHost : IAsyncDisposable
         }
         menu.Items.Add(new MenuItem { Header = "Virtual Clawdy · private Windows prototype", IsEnabled = false });
         Add("Show status", () => ShowCard(true));
+        Add("Floating desktop widget", () =>
+        {
+            _showDesktopPill = !_showDesktopPill;
+            if (_showDesktopPill) _desktopPill.Show();
+            else _desktopPill.Hide();
+        }, _showDesktopPill);
         Add("Observe existing local bridge", () => SetMode(false), !_collector.Demo);
         Add("Demo · simulated activity", () => SetMode(true), _collector.Demo);
         menu.Items.Add(new Separator());
@@ -170,6 +188,7 @@ internal sealed class TrayHost : IAsyncDisposable
         if (_closed) return; _closed = true;
         SystemParameters.StaticPropertyChanged -= SystemPreferenceChanged;
         _tick.Stop(); if (_menu is not null) _menu.IsOpen = false;
+        _desktopPill.Close();
         _card.Shutdown(); _tray.Dispose();
     }
     public async ValueTask DisposeAsync()
