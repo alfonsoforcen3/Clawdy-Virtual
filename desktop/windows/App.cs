@@ -13,26 +13,50 @@ namespace Clawdy.Windows;
 
 internal static class Program
 {
+    private const string InstanceMutex = @"Local\ClawdyVirtual.PrivatePrototype.0";
+    private static string HandoffEvent(string nonce) => @"Local\ClawdyVirtual.UpdateReady." + nonce;
+
     [STAThread]
     private static int Main(string[] args)
     {
         if (!OperatingSystem.IsWindows()) return 2;
-        bool demo = false; string python = "py";
+        bool demo = false, skipUpdateHandoff = false;
+        string python = "py";
+        string? handoffNonce = null, handoffRevision = null;
         for (var index = 0; index < args.Length; index++)
         {
             if (args[index] == "--demo") demo = true;
             else if (args[index] == "--observe") demo = false;
             else if (args[index] == "--python" && index + 1 < args.Length) python = args[++index];
+            else if (args[index] == "--skip-update-handoff") skipUpdateHandoff = true;
+            else if (args[index] == "--update-handoff" && index + 2 < args.Length && handoffNonce is null)
+            {
+                handoffNonce = args[++index]; handoffRevision = args[++index];
+                skipUpdateHandoff = true;
+            }
             else return 2;
         }
         // One explicit user-session instance. This never controls a physical bridge.
         int exitCode;
         string? restart;
-        using (var unique = new Mutex(true, @"Local\ClawdyVirtual.PrivatePrototype.0", out var owns))
+        using (var unique = new Mutex(true, InstanceMutex, out var owns))
         {
-            if (!owns) return 0;
+            if (!owns && handoffNonce is null) return 0;
             try
             {
+                if (handoffNonce is not null)
+                {
+                    if (!AcknowledgeHandoff(handoffNonce, handoffRevision)) return 2;
+                    if (!owns)
+                    {
+                        try { owns = unique.WaitOne(TimeSpan.FromSeconds(10)); }
+                        catch (AbandonedMutexException) { owns = true; }
+                    }
+                    if (!owns) return 0;
+                }
+                if (!skipUpdateHandoff && VirtualUpdateClient.PendingOnLaunch() is { } pending
+                    && TryStartupHandoff(pending, demo, python)) return 0;
+
                 var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
                 var host = new TrayHost(app, python, demo);
                 app.Exit += (_, _) => host.CloseUi();
@@ -41,7 +65,7 @@ internal static class Program
                 restart = host.RestartExecutable;
                 demo = host.Demo;
             }
-            finally { unique.ReleaseMutex(); }
+            finally { if (owns) unique.ReleaseMutex(); }
         }
         // Dispose the mutex handle before launching. The new app tests whether
         // the named mutex was created, even when the old one is unlocked.
@@ -49,10 +73,8 @@ internal static class Program
         {
             try
             {
-                var start = new ProcessStartInfo(restart) { UseShellExecute = false };
-                foreach (var argument in new[] { demo ? "--demo" : "--observe", "--python", python })
-                    start.ArgumentList.Add(argument);
-                using var launched = Process.Start(start) ?? throw new InvalidOperationException("restart-failed");
+                using var launched = Process.Start(UpdateStartInfo(restart, demo, python))
+                    ?? throw new InvalidOperationException("restart-failed");
             }
             catch (Exception error) when (error is IOException or InvalidOperationException or UnauthorizedAccessException
                 or System.ComponentModel.Win32Exception or System.Security.SecurityException)
@@ -63,6 +85,51 @@ internal static class Program
             }
         }
         return exitCode;
+    }
+
+    private static ProcessStartInfo UpdateStartInfo(string path, bool demo, string python)
+    {
+        var start = new ProcessStartInfo(path) { UseShellExecute = false };
+        foreach (var argument in new[] { demo ? "--demo" : "--observe", "--python", python, "--skip-update-handoff" })
+            start.ArgumentList.Add(argument);
+        return start;
+    }
+
+    private static bool AcknowledgeHandoff(string nonce, string? expectedRevision)
+    {
+        if (!Guid.TryParseExact(nonce, "N", out var id) || id.ToString("N") != nonce
+            || expectedRevision != VirtualUpdateClient.SourceRevision) return false;
+        try
+        {
+            using var ready = EventWaitHandle.OpenExisting(HandoffEvent(nonce));
+            return ready.Set();
+        }
+        catch (Exception error) when (error is WaitHandleCannotBeOpenedException or IOException
+            or UnauthorizedAccessException or System.Security.SecurityException) { return false; }
+    }
+
+    private static bool TryStartupHandoff(PreparedUpdate pending, bool demo, string python)
+    {
+        try
+        {
+            var nonce = Guid.NewGuid().ToString("N");
+            using var ready = new EventWaitHandle(false, EventResetMode.ManualReset, HandoffEvent(nonce));
+            var start = UpdateStartInfo(pending.Path, demo, python);
+            start.ArgumentList.Add("--update-handoff");
+            start.ArgumentList.Add(nonce);
+            start.ArgumentList.Add(pending.Revision);
+            using var launched = Process.Start(start);
+            if (launched is null) return false;
+            // The candidate must reach managed Main and confirm its embedded
+            // revision while this process still owns the single-instance lock.
+            if (ready.WaitOne(TimeSpan.FromSeconds(5))) return true;
+            try { if (!launched.HasExited) launched.Kill(); }
+            catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception) { }
+            return false;
+        }
+        catch (Exception error) when (error is IOException or InvalidOperationException or UnauthorizedAccessException
+            or System.ComponentModel.Win32Exception or System.Security.SecurityException or WaitHandleCannotBeOpenedException)
+        { return false; }
     }
 }
 

@@ -83,6 +83,7 @@ class VirtualUpdateTests(unittest.TestCase):
             self.assertEqual(invocation.call_count, 6)
             self.assertEqual(Path(staged).name, app.name)
             self.assertEqual((Path(staged).parent / executable).read_text(), "built")
+            self.assertEqual((Path(staged).parents[1] / "pending" / CURRENT).read_bytes(), (NEXT + "\n").encode())
             self.assertEqual(list(app.iterdir()), [])
 
 

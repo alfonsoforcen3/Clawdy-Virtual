@@ -67,6 +67,15 @@ def git_env():
     return env
 
 
+def record_pending(root, current, revision):
+    pending = root / "pending"
+    pending.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="clawdy-", dir=pending) as temporary:
+        marker = Path(temporary) / "revision"
+        marker.write_bytes((revision + "\n").encode("ascii"))
+        marker.replace(pending / current)
+
+
 def stage_update(revision, current, app):
     if platform.system() == "Darwin" and app.name == "VirtualClawdy.app":
         root = Path.home() / "Library/Caches/ClawdyPrototype/Updates"
@@ -83,6 +92,7 @@ def stage_update(revision, current, app):
     root.mkdir(parents=True, exist_ok=True)
     target = root / revision
     if (target / executable).is_file():
+        record_pending(root, current, revision)
         return str(target / entry)
 
     with tempfile.TemporaryDirectory(prefix="clawdy-", dir=root) as temporary:
@@ -112,6 +122,7 @@ def stage_update(revision, current, app):
         except OSError:
             if not (target / executable).is_file():
                 raise
+    record_pending(root, current, revision)
     return str(target / entry)
 
 

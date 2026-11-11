@@ -279,10 +279,15 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
     private var timer: Timer?
     private var signalSources: [DispatchSourceSignal] = []
     private var quitAfter: TimeInterval?
+    private let skipUpdateHandoff: Bool
+    private let ephemeral: Bool
 
-    init(mode: CollectorMode, diagnostics: Bool, quitAfter: TimeInterval?, overlayEnabled: Bool = false) {
+    init(mode: CollectorMode, diagnostics: Bool, quitAfter: TimeInterval?, overlayEnabled: Bool = false,
+         skipUpdateHandoff: Bool = false, ephemeral: Bool = false) {
         self.mode = mode; self.diagnostics = diagnostics; self.quitAfter = quitAfter
         self.overlayEnabled = overlayEnabled
+        self.skipUpdateHandoff = skipUpdateHandoff
+        self.ephemeral = ephemeral
         super.init()
     }
 
@@ -295,6 +300,16 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        if !skipUpdateHandoff, !ephemeral, quitAfter == nil, let app = VirtualUpdate.pendingApp() {
+            launchUpdate(at: app, reuseExisting: true) { [weak self] launched in
+                if launched { self?.quit() } else { self?.startHost() }
+            }
+        } else {
+            startHost()
+        }
+    }
+
+    private func startHost() {
         buildMenu()
         log("host launch pid=\(getpid()) mode=\(mode.rawValue) overlay=\(overlayEnabled) ephemeral=true")
         refreshMotion()
@@ -312,7 +327,7 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
         startCollector(); startRenderer()
         timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(timer!, forMode: .common)
-        if quitAfter == nil {
+        if quitAfter == nil && !ephemeral {
             updateTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
                 self?.stageAutomaticUpdate()
             }
@@ -743,22 +758,38 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
     @objc private func restartWithUpdate() {
         guard let app = stagedUpdate, restartUpdateItem.isEnabled else { return }
         restartUpdateItem.isEnabled = false
+        launchUpdate(at: app) { [weak self] launched in
+            guard let self else { return }
+            if launched {
+                self.quit()
+            } else {
+                self.restartUpdateItem.isEnabled = true
+                self.showUpdateStatus("Clawdy could not open the update. Try again.")
+            }
+        }
+    }
+
+    private func launchUpdate(at app: URL, reuseExisting: Bool = false, completion: @escaping (Bool) -> Void) {
+        let target = app.resolvingSymlinksInPath().path
+        if reuseExisting, NSWorkspace.shared.runningApplications.contains(where: {
+            !$0.isTerminated && $0.processIdentifier != getpid()
+                && $0.bundleURL?.resolvingSymlinksInPath().path == target
+        }) {
+            completion(true)
+            return
+        }
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = false
         configuration.createsNewApplicationInstance = true
-        configuration.arguments = [mode == .demo ? "--demo" : "--observe"]
+        configuration.arguments = [mode == .demo ? "--demo" : "--observe", "--skip-update-handoff"]
         if overlayEnabled { configuration.arguments.append("--overlay") }
         NSWorkspace.shared.openApplication(at: app, configuration: configuration) { [weak self] running, error in
             DispatchQueue.main.async {
                 guard let self, !self.closing else { return }
-                if let running, error == nil, !running.isTerminated,
-                   running.processIdentifier != getpid(),
-                   running.bundleURL?.resolvingSymlinksInPath() == app.resolvingSymlinksInPath() {
-                    self.quit()
-                } else {
-                    self.restartUpdateItem.isEnabled = true
-                    self.showUpdateStatus("Clawdy could not open the update. Try again.")
-                }
+                let launched = error == nil && running?.isTerminated == false
+                    && running?.processIdentifier != getpid()
+                    && running?.bundleURL?.resolvingSymlinksInPath().path == target
+                completion(launched)
             }
         }
     }
@@ -939,6 +970,44 @@ private func selfTest() throws {
     func check(_ value: Bool, _ name: String) {
         if !value { fputs("FAIL: \(name)\n", stderr); exit(1) }
     }
+    let files = FileManager.default
+    let updateFixture = files.temporaryDirectory.resolvingSymlinksInPath()
+        .appendingPathComponent("clawdy-update-fixture-\(UUID().uuidString)")
+    defer { try? files.removeItem(at: updateFixture) }
+    let pending = updateFixture.appendingPathComponent("pending")
+    try files.createDirectory(at: pending, withIntermediateDirectories: true)
+    let old = String(repeating: "a", count: 40)
+    let new = String(repeating: "b", count: 40)
+    let newest = String(repeating: "c", count: 40)
+    func marker(_ from: String, _ to: String) throws {
+        try Data((to + "\n").utf8).write(to: pending.appendingPathComponent(from))
+    }
+    func candidate(_ version: String) throws -> URL {
+        let app = updateFixture.appendingPathComponent(version).appendingPathComponent("VirtualClawdy.app")
+        let contents = app.appendingPathComponent("Contents")
+        let executable = contents.appendingPathComponent("MacOS/VirtualClawdy")
+        let resources = contents.appendingPathComponent("Resources")
+        try files.createDirectory(at: executable.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try files.createDirectory(at: resources, withIntermediateDirectories: true)
+        try files.copyItem(at: Bundle.main.bundleURL.appendingPathComponent("Contents/Info.plist"),
+                           to: contents.appendingPathComponent("Info.plist"))
+        try Data().write(to: executable)
+        try files.setAttributes([.posixPermissions: 0o700], ofItemAtPath: executable.path)
+        try Data((version + "\n").utf8).write(to: resources.appendingPathComponent("ClawdySourceRevision"))
+        return app
+    }
+    try marker(old, "not-a-revision")
+    check(VirtualUpdate.pendingApp(after: old, cache: updateFixture) == nil, "invalid update marker ignored")
+    try marker(old, new)
+    check(VirtualUpdate.pendingApp(after: old, cache: updateFixture) == nil, "missing update bundle ignored")
+    let staged = try candidate(new)
+    try marker(new, newest)
+    check(VirtualUpdate.pendingApp(after: old, cache: updateFixture)?.path == staged.path,
+          "last valid update selected when a newer bundle is missing")
+    let stagedNewest = try candidate(newest)
+    try marker(newest, new)
+    check(VirtualUpdate.pendingApp(after: old, cache: updateFixture)?.path == stagedNewest.path,
+          "pending chain follows valid builds and stops at a cycle")
     var framing = NDJSONFramer(maximumBytes: 16)
     check(try framing.append(Data("{\"a\":".utf8)).isEmpty, "fragment retained")
     let frames = try framing.append(Data("1}\n{}\n".utf8))
@@ -1339,7 +1408,7 @@ private func selfTest() throws {
         check(pong?.type == "pong" && pong?.nonce == 1, "real child complete small ack delivered")
         try childInput.fileHandleForWriting.write(contentsOf: Data([120])) // x: release child
     }
-    print("VirtualClawdy host self-test: UTF-8/framing, validation, freshness/replay, crash budget, detached production menu actions, accessible app status, burst/full-pipe recovery and real-child small-ack reads passed.")
+    print("VirtualClawdy host self-test: UTF-8/framing, validation, freshness/replay, crash budget, detached production menu actions, accessible app status, staged update selection, burst/full-pipe recovery and real-child small-ack reads passed.")
 }
 
 @main private enum HostMain {
@@ -1365,10 +1434,10 @@ private func selfTest() throws {
             do { try ClawdyAttentionController.renderPreview(to: String(option.dropFirst("--render-attention-preview=".count))); return }
             catch { fputs("Attention preview failed: \(error)\n", stderr); exit(1) }
         }
-        let allowed = ["--demo", "--observe", "--diagnostics", "--ephemeral", "--overlay"]
+        let allowed = ["--demo", "--observe", "--diagnostics", "--ephemeral", "--overlay", "--skip-update-handoff"]
         guard args.allSatisfy({ allowed.contains($0) || $0.hasPrefix("--quit-after=") }),
               !(args.contains("--demo") && args.contains("--observe")) else {
-            fputs("Usage: VirtualClawdy [--observe | --demo] [--overlay] [--diagnostics] [--ephemeral] [--quit-after=seconds] | --self-test | --render-menu-preview=path\n", stderr); exit(2)
+            fputs("Usage: VirtualClawdy [--observe | --demo] [--overlay] [--diagnostics] [--ephemeral] [--skip-update-handoff] [--quit-after=seconds] | --self-test | --render-menu-preview=path\n", stderr); exit(2)
         }
         var duration: TimeInterval? = nil
         if let argument = args.first(where: { $0.hasPrefix("--quit-after=") }) {
@@ -1379,7 +1448,9 @@ private func selfTest() throws {
         let app = NSApplication.shared
         let delegate = ClawdyHost(mode: args.contains("--demo") ? .demo : .observe,
                                   diagnostics: args.contains("--diagnostics"), quitAfter: duration,
-                                  overlayEnabled: args.contains("--overlay"))
+                                  overlayEnabled: args.contains("--overlay"),
+                                  skipUpdateHandoff: args.contains("--skip-update-handoff"),
+                                  ephemeral: args.contains("--ephemeral"))
         app.delegate = delegate
         withExtendedLifetime(delegate) { app.run() }
     }

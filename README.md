@@ -50,8 +50,9 @@ https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
 
 Use the update controls in the Mac menu bar or Windows tray. Enable
 **Automatic Updates** to prepare tested changes from GitHub in the background,
-then restart Clawdy when it says the update is ready. Older previews need a
-one-time rebuild to get these controls.
+then apply the update on the next normal launch. You can also restart Clawdy
+from the update menu as soon as it is ready. Older previews need a one-time
+rebuild to get these controls.
 
 Live activity requires an existing compatible local status service. The
 [local status guide](docs/LOCAL_STATUS.md) explains how to connect one. Windows
