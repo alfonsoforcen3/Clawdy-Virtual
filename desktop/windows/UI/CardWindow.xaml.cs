@@ -37,6 +37,7 @@ public sealed partial class CardWindow : Window
     public bool HasPendingAttention => _policy.HasPendingAttention;
     public event EventHandler? AutoOpenRequested;
     public event EventHandler? Dismissed;
+    public event Action? RightClicked;
     // Coordinates are screen DIPs. The host supplies the tray monitor work area
     // after converting physical NotifyIcon pixels with that monitor's DPI.
     public Rect WorkArea { get; set; } = SystemParameters.WorkArea;
@@ -50,6 +51,7 @@ public sealed partial class CardWindow : Window
         CloseButton.Click += (_, _) => Dismiss();
         MouseEnter += (_, _) => { _hoverVersion++; _cardHovered = true; Stop(ref _exitTimer); SetInteraction(); };
         MouseLeave += (_, _) => { _hoverVersion++; _cardHovered = false; SetInteraction(); ScheduleExit(); };
+        MouseRightButtonUp += (_, e) => { e.Handled = true; Dismiss(); RightClicked?.Invoke(); };
         PreviewKeyDown += (_, args) => { if (args.Key == Key.Escape) { Dismiss(); args.Handled = true; } };
         Deactivated += (_, _) => { _keyboard = false; SetInteraction(); ScheduleExit(); };
         Activated += (_, _) => { _keyboard = true; SetInteraction(); };
@@ -101,7 +103,7 @@ public sealed partial class CardWindow : Window
         if (hovered)
         {
             Stop(ref _exitTimer); Stop(ref _enterTimer);
-            _enterTimer = Once(TimeSpan.FromMilliseconds(120), () =>
+            _enterTimer = Once(TimeSpan.FromMilliseconds(200), () =>
             {
                 _enterTimer = null;
                 if (generation == _hoverVersion && _anchorHovered) { _policy.Show(false); Present(false); }
@@ -162,12 +164,12 @@ public sealed partial class CardWindow : Window
         _presentationVersion++; _keyboard |= keyboard; SetInteraction();
         Stop(ref _enterTimer); Stop(ref _exitTimer);
         var area = Valid(WorkArea) && WorkArea.Width > 0 && WorkArea.Height > 0 ? WorkArea : SystemParameters.WorkArea;
-        var width = Math.Min(332, Math.Max(1, area.Width - 16));
-        var height = Math.Min(184, Math.Max(1, area.Height - 16));
+        var width = Math.Min(324, Math.Max(1, area.Width - 16));
+        var height = Math.Min(176, Math.Max(1, area.Height - 16));
         Width = width; Height = height;
         Left = Math.Clamp(_anchor.Left + _anchor.Width / 2 - width / 2, area.Left + 8, Math.Max(area.Left + 8, area.Right - width - 8));
         var above = _anchor.Top > area.Top + area.Height / 2;
-        Top = Math.Clamp(above ? _anchor.Top - height - 6 : _anchor.Bottom + 6,
+        Top = Math.Clamp(above ? _anchor.Top - height - 12 : _anchor.Bottom + 12,
             area.Top + 8, Math.Max(area.Top + 8, area.Bottom - height - 8));
         ShowActivated = keyboard;
         var reveal = !IsVisible;

@@ -181,6 +181,7 @@ internal sealed class TrayHost : IAsyncDisposable
         _tray.Hovered += () => SetHover(true);
         _tray.Selected += ShowCard;
         _tray.ContextRequested += OpenMenu;
+        _card.RightClicked += () => OpenMenu();
         _tray.SessionActiveChanged += active =>
         {
             _sessionActive = active;
