@@ -23,7 +23,11 @@ static List<int> Pids(string marker)
 {
     if (!File.Exists(marker)) return [];
     var result = new List<int>();
-    foreach (var line in File.ReadAllLines(marker))
+    // The fixture may still be appending. Windows must allow the reader and
+    // writer to hold the log at the same time, including under the py launcher.
+    using var stream = new FileStream(marker, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+    using var reader = new StreamReader(stream);
+    while (reader.ReadLine() is { } line)
         try { using var doc = JsonDocument.Parse(line); result.Add(doc.RootElement.GetProperty("pid").GetInt32()); }
         catch (JsonException) { /* Last append may still be in flight. */ }
     return result;
