@@ -21,13 +21,14 @@ internal sealed class VirtualUpdateClient(Func<CancellationToken, Task<string>> 
     private readonly string _script = Path.Combine(AppContext.BaseDirectory, "update_virtual_clawdy.py");
     private static string LocalRoot => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClawdyPrototype");
     private static string OptInPath => Path.Combine(LocalRoot, "Settings", "automatic-updates");
+    private static string OptOutPath => Path.Combine(LocalRoot, "Settings", "disable-automatic-updates");
 
     public bool CanUpdate => IsRevision(SourceRevision) && _app is not null && Path.IsPathFullyQualified(_app)
         && string.Equals(Path.GetFileName(_app), ExecutableName, StringComparison.OrdinalIgnoreCase) && File.Exists(_script);
 
-    public bool AutomaticEnabled => File.Exists(OptInPath);
+    public bool AutomaticEnabled => !File.Exists(OptOutPath);
 
-    internal static PreparedUpdate? PendingOnLaunch() => File.Exists(OptInPath) && SourceRevision is not null
+    internal static PreparedUpdate? PendingOnLaunch() => (!File.Exists(OptOutPath)) && SourceRevision is not null
         ? ReadPending(SourceRevision, LocalRoot) : null;
 
     internal static PreparedUpdate? ReadPending(string current, string localRoot)
@@ -71,12 +72,17 @@ internal sealed class VirtualUpdateClient(Func<CancellationToken, Task<string>> 
     {
         try
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(OptOutPath)!);
             if (enabled)
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(OptInPath)!);
+                if (File.Exists(OptOutPath)) File.Delete(OptOutPath);
                 File.WriteAllText(OptInPath, "enabled\n");
             }
-            else File.Delete(OptInPath);
+            else
+            {
+                File.WriteAllText(OptOutPath, "disabled\n");
+                if (File.Exists(OptInPath)) File.Delete(OptInPath);
+            }
             return true;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException)

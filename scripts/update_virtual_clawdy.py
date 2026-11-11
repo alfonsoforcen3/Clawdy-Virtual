@@ -29,8 +29,22 @@ def github(path):
         "Accept": "application/vnd.github+json",
         "User-Agent": "Virtual-Clawdy-Updater",
     })
-    with urlopen(request, timeout=15) as response:
-        return json.load(response)
+    try:
+        with urlopen(request, timeout=15) as response:
+            return json.load(response)
+    except Exception:
+        if os.name == "nt":
+            # Fallback to Windows WinINet via PowerShell for enterprise proxies
+            url = API + path
+            ps_cmd = f"Invoke-RestMethod -Uri '{url}' -Headers @{{'User-Agent'='Virtual-Clawdy-Updater';'Accept'='application/vnd.github+json'}} | ConvertTo-Json -Depth 10 -Compress"
+            powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+            raw = subprocess.check_output(
+                [str(powershell), "-NoProfile", "-NonInteractive", "-Command", ps_cmd],
+                timeout=20,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            ).decode("utf-8", errors="replace")
+            return json.loads(raw)
+        raise
 
 
 def candidate_revision(current):
@@ -113,8 +127,13 @@ def stage_update(revision, current, app):
             run([str(build / executable), "--self-test"], timeout=90)
         else:
             powershell = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
-            run([str(powershell), "-NoLogo", "-NoProfile", "-NonInteractive", "-File",
-                 str(source / "desktop/windows/build.ps1"), "-Output", str(build)], env=env)
+            dotnet_home = Path.home() / ".dotnet"
+            build_env = dict(env)
+            if dotnet_home.exists():
+                build_env["DOTNET_ROOT"] = str(dotnet_home)
+                build_env["PATH"] = str(dotnet_home) + os.pathsep + build_env.get("PATH", "")
+            run([str(powershell), "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
+                 str(source / "desktop/windows/build.ps1"), "-Output", str(build)], env=build_env)
         if not (build / executable).is_file():
             raise UpdateUnavailable("The build did not produce a Clawdy app.")
         try:
