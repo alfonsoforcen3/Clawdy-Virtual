@@ -190,7 +190,7 @@ public sealed class CollectorSupervisor : IAsyncDisposable
             catch (Exception error) when (error is OperationCanceledException or IOException or TimeoutException) { }
         }
     }
-    private async Task<string> ResolvePythonAsync(CancellationToken token)
+    internal async Task<string> ResolvePythonAsync(CancellationToken token)
     {
         if (!string.Equals(Path.GetFileNameWithoutExtension(_python), "py", StringComparison.OrdinalIgnoreCase)) return _python;
         lock (_gate) { if (_resolvedPython is not null) return _resolvedPython; }

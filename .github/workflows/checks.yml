@@ -18,7 +18,7 @@ jobs:
             python: '3.12'
           - os: windows-latest
             python: '3.12'
-          - os: macos-14
+          - os: macos-15
             python: '3.12'
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,7 +32,7 @@ jobs:
         run: python -m unittest discover -s tests -v
   native-macos:
     name: Native macOS prototype build and fixtures
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:

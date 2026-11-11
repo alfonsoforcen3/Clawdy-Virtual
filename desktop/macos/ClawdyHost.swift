@@ -248,6 +248,12 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
     private var pauseItem: NSMenuItem!
     private var motionItem: NSMenuItem!
     private var moveItem: NSMenuItem!
+    private var updateItem: NSMenuItem!
+    private var automaticUpdateItem: NSMenuItem!
+    private var restartUpdateItem: NSMenuItem!
+    private let updateStatus = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private var updateTimer: Timer?
+    private var stagedUpdate: URL?
     private var collector: OwnedChild?
     private var renderer: OwnedChild?
     private var children: [OwnedChild] = []
@@ -306,6 +312,12 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
         startCollector(); startRenderer()
         timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.tick() }
         RunLoop.main.add(timer!, forMode: .common)
+        if quitAfter == nil {
+            updateTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+                self?.stageAutomaticUpdate()
+            }
+            stageAutomaticUpdate()
+        }
         if let interval = quitAfter {
             DispatchQueue.main.asyncAfter(deadline: .now() + interval) { [weak self] in self?.quit() }
         }
@@ -343,6 +355,14 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
         moveItem = item("Move Clawdy — drag to position", #selector(toggleMove)); menu.addItem(moveItem)
         menu.addItem(item("Restart overlay", #selector(retryRenderer)))
         menu.addItem(item("Retry status collector", #selector(retryCollector)))
+        menu.addItem(.separator())
+        updateItem = item("Update Clawdy…", #selector(updateClawdy)); menu.addItem(updateItem)
+        automaticUpdateItem = item("Automatic Updates", #selector(toggleAutomaticUpdates))
+        automaticUpdateItem.state = VirtualUpdate.automatic ? .on : .off
+        menu.addItem(automaticUpdateItem)
+        restartUpdateItem = item("Restart to Apply Update", #selector(restartWithUpdate))
+        restartUpdateItem.isEnabled = false; menu.addItem(restartUpdateItem)
+        updateStatus.isEnabled = false; updateStatus.isHidden = true; menu.addItem(updateStatus)
         menu.addItem(.separator())
         let privacy = NSMenuItem(title: "No hooks, hardware or startup changes", action: nil, keyEquivalent: "")
         privacy.isEnabled = false; menu.addItem(privacy)
@@ -684,6 +704,65 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
         scheduleCollectorRestart(after: 1)
     }
 
+    @objc private func updateClawdy() { stageUpdate(manual: true) }
+
+    @objc private func toggleAutomaticUpdates() {
+        VirtualUpdate.automatic.toggle()
+        automaticUpdateItem.state = VirtualUpdate.automatic ? .on : .off
+        stageAutomaticUpdate()
+    }
+
+    private func stageAutomaticUpdate() {
+        if VirtualUpdate.automatic { stageUpdate(manual: false) }
+    }
+
+    private func stageUpdate(manual: Bool) {
+        guard !closing, updateItem.isEnabled else { return }
+        updateItem.isEnabled = false
+        if manual { showUpdateStatus("Checking and preparing updates…") }
+        VirtualUpdate.stage { [weak self] reply in
+            guard let self, !self.closing else { return }
+            self.updateItem.isEnabled = true
+            if let app = reply?.stagedApp {
+                self.stagedUpdate = app
+                self.restartUpdateItem.isEnabled = true
+                self.showUpdateStatus("Update ready. Restart when convenient.")
+            } else if manual {
+                let message = reply?.status == "current" ? "Clawdy is up to date."
+                    : reply?.message ?? "Clawdy could not prepare the update. Try again."
+                self.showUpdateStatus(message)
+            }
+        }
+    }
+
+    private func showUpdateStatus(_ message: String) {
+        updateStatus.title = message
+        updateStatus.isHidden = false
+    }
+
+    @objc private func restartWithUpdate() {
+        guard let app = stagedUpdate, restartUpdateItem.isEnabled else { return }
+        restartUpdateItem.isEnabled = false
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        configuration.createsNewApplicationInstance = true
+        configuration.arguments = [mode == .demo ? "--demo" : "--observe"]
+        if overlayEnabled { configuration.arguments.append("--overlay") }
+        NSWorkspace.shared.openApplication(at: app, configuration: configuration) { [weak self] running, error in
+            DispatchQueue.main.async {
+                guard let self, !self.closing else { return }
+                if let running, error == nil, !running.isTerminated,
+                   running.processIdentifier != getpid(),
+                   running.bundleURL?.resolvingSymlinksInPath() == app.resolvingSymlinksInPath() {
+                    self.quit()
+                } else {
+                    self.restartUpdateItem.isEnabled = true
+                    self.showUpdateStatus("Clawdy could not open the update. Try again.")
+                }
+            }
+        }
+    }
+
     @objc private func quit() { NSApp.terminate(nil) }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         cleanup(); return .terminateNow
@@ -703,6 +782,9 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
             ("Move Clawdy — drag to position", #selector(toggleMove)),
             ("Restart overlay", #selector(retryRenderer)),
             ("Retry status collector", #selector(retryCollector)),
+            ("Update Clawdy…", #selector(updateClawdy)),
+            ("Automatic Updates", #selector(toggleAutomaticUpdates)),
+            ("Restart to Apply Update", #selector(restartWithUpdate)),
             ("Quit Clawdy", #selector(quit))
         ]
         let controls = menu.items.filter { $0.action != nil }
@@ -815,6 +897,7 @@ private final class ClawdyHost: NSObject, NSApplicationDelegate, NSMenuDelegate 
         collectorGeneration += 1; rendererGeneration += 1
         collectorRestart = nil; rendererRestart = nil
         timer?.invalidate(); timer = nil
+        updateTimer?.invalidate(); updateTimer = nil
         for source in signalSources { source.cancel() }; signalSources.removeAll()
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         for child in children { stop(child) }

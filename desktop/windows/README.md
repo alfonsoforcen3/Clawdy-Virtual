@@ -78,6 +78,19 @@ already open, use its tray menu to switch OBS/demo or quit. OBS can legitimately
 show disconnected on a machine without the separately installed physical bridge.
 Do not install that companion just to obtain a demo.
 
+## Update Clawdy
+
+Open Clawdy's tray menu and choose the update action. Clawdy checks the public
+repository's `main` branch and builds the exact revision after GitHub checks
+pass. Enable **Automatic Updates** to prepare builds in the background, then
+choose the restart action when an update is ready. The previous build remains
+available. If you use a shortcut, point it at the updated executable under
+`%LOCALAPPDATA%\ClawdyPrototype\Updates\<revision>`.
+
+If your existing app has no update menu, build once from a clean checkout of
+public `main`. The updater uses the same Git, Python and .NET SDK prerequisites
+as the source build and respects Windows and workplace software policies.
+
 ## Intended interaction and boundaries
 
 - Three native horizontal traffic lights: input-needed blinks red, error is solid
