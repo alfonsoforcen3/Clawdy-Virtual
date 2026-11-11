@@ -21,7 +21,7 @@ fi
 mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 compiler=(xcrun swiftc -parse-as-library -swift-version 5 -O
   -target "$architecture-apple-macosx13.0" -framework AppKit -framework QuartzCore)
-"${compiler[@]}" "$source_dir/Shared.swift" "$source_dir/AttentionPanel.swift" "$source_dir/ClawdyHost.swift" \
+"${compiler[@]}" "$source_dir/Shared.swift" "$source_dir/AttentionPanel.swift" "$source_dir/ClawdyHost.swift" "$source_dir/VirtualUpdate.swift" \
   -o "$bundle/Contents/MacOS/VirtualClawdy"
 "${compiler[@]}" "$source_dir/Shared.swift" "$source_dir/ClawdyRenderer.swift" \
   -o "$bundle/Contents/MacOS/ClawdyRenderer"
@@ -32,6 +32,12 @@ if [[ -f "$repo_dir/scripts/status_core.py" ]]; then
 fi
 cp -X "$source_dir/Assets/ClawdyProduct.png" "$bundle/Contents/Resources/ClawdyProduct.png"
 cp -X "$source_dir/Info.plist" "$bundle/Contents/Info.plist"
+cp -X "$repo_dir/scripts/update_virtual_clawdy.py" "$bundle/Contents/Resources/update_virtual_clawdy.py"
+revision=""
+if status="$(git -C "$repo_dir" status --porcelain 2>/dev/null)" && [[ -z "$status" ]]; then
+  revision="$(git -C "$repo_dir" rev-parse HEAD)"
+fi
+printf '%s\n' "$revision" > "$bundle/Contents/Resources/ClawdySourceRevision"
 # Finder metadata from cloud-backed source copies is not allowed in signatures.
 # Strip only these build-artifact attributes; preserve quarantine/security flags.
 xattr -dr com.apple.FinderInfo "$bundle" 2>/dev/null || true

@@ -45,6 +45,21 @@ Optional v1 snapshot confidence is `demo`, `reported`, or `unknown`; no fresh
 or confirmed claim exists. This prototype does not establish real-provider
 acceptance. Ordinary browser AI chats remain unsupported.
 
+## Update Clawdy
+
+From the menu bar, choose **Update Clawdy…**. Clawdy checks the public
+repository's `main` branch and builds the exact revision after GitHub checks
+pass. **Automatic Updates** prepares builds in the background and opens the
+prepared build on the next normal launch. Choose **Restart to Apply Update** to
+switch sooner. Clawdy keeps the previous bundle; run its executable with
+`--skip-update-handoff` to reopen that version for recovery. If Automatic Updates
+is off, point your shortcut at the prepared bundle under
+`~/Library/Caches/ClawdyPrototype/Updates/<revision>/VirtualClawdy.app`.
+
+If your existing app has no update menu, build once from a clean checkout of
+public `main`. Updates require Git, the same local build tools and access to
+GitHub. The locally built app is still a source preview.
+
 ## Verification
 
 ```bash

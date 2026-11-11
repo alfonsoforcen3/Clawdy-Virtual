@@ -20,5 +20,9 @@
     <Content Include="../../scripts/virtual_clawdy.py" Link="collector/virtual_clawdy.py" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../scripts/status_core.py" Link="collector/status_core.py" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../scripts/local_chat_routes.py" Link="collector/local_chat_routes.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../scripts/update_virtual_clawdy.py" Link="update_virtual_clawdy.py"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <AssemblyMetadata Include="ClawdySourceRevision" Value="$(ClawdySourceRevision)"
+                      Condition="'$(ClawdySourceRevision)' != ''" />
   </ItemGroup>
 </Project>

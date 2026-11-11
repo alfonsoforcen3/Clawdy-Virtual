@@ -78,6 +78,21 @@ already open, use its tray menu to switch OBS/demo or quit. OBS can legitimately
 show disconnected on a machine without the separately installed physical bridge.
 Do not install that companion just to obtain a demo.
 
+## Update Clawdy
+
+Open Clawdy's tray menu and choose the update action. Clawdy checks the public
+repository's `main` branch and builds the exact revision after GitHub checks
+pass. Enable **Automatic Updates** to prepare builds in the background and open
+the prepared build on the next normal launch. Choose the restart action to switch
+sooner. The previous build remains available; run it with `--skip-update-handoff`
+to reopen that version for recovery. If Automatic Updates is off, point your
+shortcut at the prepared executable under
+`%LOCALAPPDATA%\ClawdyPrototype\Updates\<revision>`.
+
+If your existing app has no update menu, build once from a clean checkout of
+public `main`. The updater uses the same Git, Python and .NET SDK prerequisites
+as the source build and respects Windows and workplace software policies.
+
 ## Intended interaction and boundaries
 
 - Three native horizontal traffic lights: input-needed blinks red, error is solid
@@ -129,7 +144,7 @@ Do not install that companion just to obtain a demo.
 
 Routing IDs stay in private host/card memory, not diagnostic output or reports.
 This Windows prototype has no separate renderer process, authenticated ingress,
-installer, update/rollback flow or production signing. Its shared legacy status
+installer or production signing. Its shared legacy status
 source is unauthenticated loopback; do not call it an authenticated backend.
 
 ## Checks that do not claim native UI acceptance
