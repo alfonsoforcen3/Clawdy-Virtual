@@ -46,7 +46,7 @@ https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
 
 1. [Open the interactive desk demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience) and switch between **Working**, **Done**, and **Your turn**.
 2. Build the desktop preview for [macOS 13+](docs/TRY_VIRTUAL_CLAWDY.md) or [Windows 11 x64 / ARM64](desktop/windows/README.md).
-3. Start in demo mode. It uses sample activity and requires no AI account, API key, or physical Clawdy.
+3. Start Clawdy. By default, it connects directly to your live local bridge to observe real AI sessions (`--observe`). Pass `--demo` if you want simulated fixture activity without a local bridge.
 
 Use the update controls in the Mac menu bar or Windows tray. Enable
 **Automatic Updates** to prepare tested changes from GitHub in the background,

@@ -49,29 +49,30 @@ build, restore or unsigned launch is blocked on a managed PC, use your usual
 IT approval process. Try the [browser demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience)
 while access is pending.
 
-### Start the simulated tray demo
+### Run Virtual Clawdy (Live Bridge by default)
 
-Use the directory printed by the build script. For the default x64 output:
+Use the directory printed by the build script. By default, Virtual Clawdy connects directly to your live local status bridge (TCP port 8765) to monitor real active sessions:
 
 ```powershell
 $exe = Join-Path $env:LOCALAPPDATA 'ClawdyPrototype\Build\publish\win-x64\Clawdy.Windows.exe'
-& $exe --demo
+& $exe
 ```
 
-Use `win-arm64` on ARM64, or use the actual build directory if you passed
-`-Output`. If `py -3` is unavailable, pass a verified native Python executable
-as a separate argument. For example, substitute the real path for this sample:
+If `py -3` is unavailable, pass a verified native Python executable as a separate argument:
 
 ```powershell
 $pythonExe = 'C:\Path To Python\python.exe'
 & $pythonExe --version
-& $exe --demo --python $pythonExe
+& $exe --python $pythonExe
 ```
 
-Look for Clawdy in the notification area, including the hidden icons menu. Demo
-mode shows sample activity and uses no provider, API key or toy. With an
-already-running companion, you can select OBS from Clawdy’s tray menu for
-observed activity.
+To run simulated fixture activity instead of the live bridge, pass `--demo`:
+
+```powershell
+& $exe --demo
+```
+
+Look for Clawdy in the notification area and the floating desktop companion widget. In Observe mode, Clawdy tracks your live AI agents. You can also switch between live bridge and simulated demo at any time from Clawdy’s tray menu.
 
 Only one prototype instance per logged-in Windows session is admitted. If it is
 already open, use its tray menu to switch OBS/demo or quit. OBS can legitimately
