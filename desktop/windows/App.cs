@@ -319,7 +319,7 @@ internal sealed class TrayHost : IAsyncDisposable
             _nextAutomaticCheck = DateTimeOffset.MinValue;
             if (!enabled) _automaticUpdateCancellation?.Cancel();
             if (_updateWork is null && _updateReply?.State != UpdateState.Ready)
-                _updateMessage = enabled ? "Automatic preparation enabled. Restart stays manual." : "Automatic updates off.";
+                _updateMessage = enabled ? "Automatic updates on. Prepared updates open on the next launch." : "Automatic updates off.";
         }
         else _updateMessage = "Clawdy could not save the automatic update setting.";
         RefreshUpdateMenu();

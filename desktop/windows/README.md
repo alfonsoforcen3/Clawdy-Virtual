@@ -144,7 +144,7 @@ as the source build and respects Windows and workplace software policies.
 
 Routing IDs stay in private host/card memory, not diagnostic output or reports.
 This Windows prototype has no separate renderer process, authenticated ingress,
-installer, update/rollback flow or production signing. Its shared legacy status
+installer or production signing. Its shared legacy status
 source is unauthenticated loopback; do not call it an authenticated backend.
 
 ## Checks that do not claim native UI acceptance
