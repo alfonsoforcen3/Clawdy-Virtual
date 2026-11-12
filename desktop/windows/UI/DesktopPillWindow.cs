@@ -92,33 +92,34 @@ public sealed class DesktopPillWindow : Window
         mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // 2: Text (spacious, no overlap)
         mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // 3: Traffic Lights
 
-        // 1. OFFICIAL CLAWDY BRAND AVATAR (48x48px with warm cream background)
+        // 1. OFFICIAL CLAWDY BRAND AVATAR (Background-less, floats natively on dark glass)
         var avatarBorder = new Border
         {
-            Width = 50,
-            Height = 50,
-            CornerRadius = new CornerRadius(13),
-            Background = new SolidColorBrush(Color.FromRgb(245, 232, 212)),
+            Width = 52,
+            Height = 52,
+            Background = Brushes.Transparent,
             Cursor = Cursors.Hand,
-            Margin = new Thickness(0, 0, 8, 0)
+            Margin = new Thickness(0, 0, 6, 0)
         };
         avatarBorder.MouseLeftButtonDown += (s, e) => { e.Handled = true; _openCard(); };
 
-        var avatarGrid = new Grid { Margin = new Thickness(3) };
+        var avatarGrid = new Grid();
         if (CachedProduct != null)
         {
-            avatarGrid.Children.Add(new Image
+            var clawdyImg = new Image
             {
                 Source = CachedProduct,
                 Stretch = Stretch.Uniform
-            });
+            };
+            RenderOptions.SetBitmapScalingMode(clawdyImg, BitmapScalingMode.HighQuality);
+            avatarGrid.Children.Add(clawdyImg);
         }
         else
         {
             avatarGrid.Children.Add(new TextBlock
             {
                 Text = "C",
-                FontSize = 24,
+                FontSize = 26,
                 FontWeight = FontWeights.Black,
                 Foreground = new SolidColorBrush(Color.FromRgb(225, 148, 109)),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -129,15 +130,14 @@ public sealed class DesktopPillWindow : Window
         Grid.SetColumn(avatarBorder, 0);
         mainGrid.Children.Add(avatarBorder);
 
-        // 2. WORKING AI PROVIDER BADGE (Iterates through working AIs like Clawdy Pro Max)
+        // 2. WORKING AI PROVIDER BADGE (Background-less glowing vector logo)
         _providerBox = new Border
         {
-            Width = 34,
-            Height = 34,
-            CornerRadius = new CornerRadius(10),
-            Background = new SolidColorBrush(Color.FromRgb(28, 32, 42)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)),
-            BorderThickness = new Thickness(1),
+            Width = 32,
+            Height = 32,
+            Background = Brushes.Transparent,
+            BorderBrush = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
             Cursor = Cursors.Hand
@@ -146,8 +146,8 @@ public sealed class DesktopPillWindow : Window
 
         var viewbox = new Viewbox
         {
-            Width = 20,
-            Height = 20,
+            Width = 24,
+            Height = 24,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -382,19 +382,16 @@ public sealed class DesktopPillWindow : Window
             case "codex":
                 _providerPath.Data = CodexGeom;
                 _providerPath.Fill = new SolidColorBrush(Color.FromRgb(16, 163, 127)); // OpenAI green
-                _providerBox.Background = new SolidColorBrush(Color.FromRgb(15, 38, 30));
                 break;
             case "claude":
                 _providerPath.Data = ClaudeGeom;
                 _providerPath.Fill = new SolidColorBrush(Color.FromRgb(225, 148, 109)); // Anthropic terracotta
-                _providerBox.Background = new SolidColorBrush(Color.FromRgb(42, 28, 22));
                 break;
             case "cursor":
                 _providerPath.Data = CursorGeom;
                 _providerPath.Fill = Brushes.Transparent;
                 _providerPath.Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)); // Cursor cyan
-                _providerPath.StrokeThickness = 2;
-                _providerBox.Background = new SolidColorBrush(Color.FromRgb(18, 32, 48));
+                _providerPath.StrokeThickness = 2.2;
                 break;
             case "gemini":
             default:
@@ -404,16 +401,22 @@ public sealed class DesktopPillWindow : Window
                     _providerPath.Fill = Brushes.Transparent;
                     _providerPath.Stroke = new SolidColorBrush(Color.FromRgb(50, 220, 130));
                     _providerPath.StrokeThickness = 2.5;
-                    _providerBox.Background = new SolidColorBrush(Color.FromRgb(16, 38, 26));
                 }
                 else
                 {
                     _providerPath.Data = GeminiGeom;
                     _providerPath.Fill = new SolidColorBrush(Color.FromRgb(78, 136, 245)); // Gemini blue
-                    _providerBox.Background = new SolidColorBrush(Color.FromRgb(22, 32, 54));
                 }
                 break;
         }
+
+        _providerPath.Effect = new DropShadowEffect
+        {
+            BlurRadius = 10,
+            ShadowDepth = 0,
+            Opacity = 0.7,
+            Color = color
+        };
     }
 
     private static (string Name, Color Color) FormatProvider(string provider) => provider switch
