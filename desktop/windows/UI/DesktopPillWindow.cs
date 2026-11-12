@@ -56,12 +56,36 @@ public sealed class DesktopPillWindow : Window
         Left = Math.Max(24, workArea.Right - Width - 36);
         Top = Math.Max(24, workArea.Top + 36);
 
+        // Subtle Claude-like terracotta gradient background with warm glass border
+        var backgroundGradient = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 1),
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(244, 52, 28, 22), 0.0),   // Warm terracotta tint
+                new GradientStop(Color.FromArgb(246, 36, 20, 18), 0.45),  // Deep rich terracotta
+                new GradientStop(Color.FromArgb(248, 22, 14, 15), 1.0)    // Dark warm espresso base
+            }
+        };
+
+        var borderGradient = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 1),
+            GradientStops =
+            {
+                new GradientStop(Color.FromArgb(120, 225, 148, 109), 0.0), // Warm terracotta glass rim
+                new GradientStop(Color.FromArgb(45, 225, 148, 109), 1.0)   // Subtle bottom rim
+            }
+        };
+
         // Root pill container with frosted glass aesthetic and soft drop shadow
         var root = new Border
         {
             CornerRadius = new CornerRadius(24),
-            Background = new SolidColorBrush(Color.FromArgb(244, 21, 24, 31)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(65, 255, 255, 255)),
+            Background = backgroundGradient,
+            BorderBrush = borderGradient,
             BorderThickness = new Thickness(1.4),
             Cursor = Cursors.SizeAll,
             Effect = new DropShadowEffect
@@ -69,7 +93,7 @@ public sealed class DesktopPillWindow : Window
                 BlurRadius = 24,
                 ShadowDepth = 4,
                 Opacity = 0.55,
-                Color = Colors.Black
+                Color = Color.FromRgb(15, 8, 8)
             }
         };
 
@@ -201,8 +225,8 @@ public sealed class DesktopPillWindow : Window
         var trafficLightHousing = new Border
         {
             VerticalAlignment = VerticalAlignment.Center,
-            Background = new SolidColorBrush(Color.FromArgb(160, 14, 16, 20)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+            Background = new SolidColorBrush(Color.FromArgb(175, 20, 12, 12)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(50, 225, 148, 109)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(14),
             Padding = new Thickness(6, 4, 6, 4)
