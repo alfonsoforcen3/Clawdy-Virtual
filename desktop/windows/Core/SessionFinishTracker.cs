@@ -12,23 +12,26 @@ public struct BlinkState
 
 public sealed class SessionFinishTracker
 {
-    private int _prevWorkingCount;
+    private int _prevWorkingCount = -1;
     private string _prevState = "disconnected";
     private long _blinkStartTick;
     private bool _allFinished;
 
     public void Update(StatusSnapshot snapshot, long nowTicks)
     {
-        // Detect session finish:
-        // 1. Working count dropped while previously > 0
-        // 2. Or state changed from "working" to "ready"
-        bool sessionFinished = (snapshot.WorkingCount < _prevWorkingCount && _prevWorkingCount > 0)
-                            || (_prevState == "working" && snapshot.State == "ready");
-
-        if (sessionFinished)
+        if (_prevWorkingCount >= 0)
         {
-            _blinkStartTick = nowTicks;
-            _allFinished = snapshot.WorkingCount == 0 || snapshot.State == "ready";
+            // Detect session finish:
+            // 1. Working count dropped while previously > 0 (e.g. 2 -> 1, or 1 -> 0)
+            // 2. Or state changed from "working" to "ready"
+            bool sessionFinished = (snapshot.WorkingCount < _prevWorkingCount && _prevWorkingCount > 0)
+                                || (_prevState == "working" && snapshot.State == "ready");
+
+            if (sessionFinished)
+            {
+                _blinkStartTick = nowTicks;
+                _allFinished = snapshot.WorkingCount == 0 || snapshot.State == "ready";
+            }
         }
 
         _prevWorkingCount = snapshot.WorkingCount;
@@ -43,15 +46,15 @@ public sealed class SessionFinishTracker
         }
 
         double elapsedMs = Stopwatch.GetElapsedTime(_blinkStartTick, nowTicks).TotalMilliseconds;
-        // 3 blinks: 3 cycles of 500ms (250ms ON, 250ms OFF) = 1500ms total
-        if (elapsedMs >= 1500.0)
+        // 3 distinct, clearly visible blinks: 3 cycles of 600ms (340ms ON, 260ms OFF) = 1800ms total
+        if (elapsedMs >= 1800.0)
         {
             _blinkStartTick = 0;
             return new BlinkState { IsBlinking = false, AllFinished = _allFinished };
         }
 
-        double cyclePos = elapsedMs % 500.0;
-        bool greenOn = cyclePos < 250.0;
+        double cyclePos = elapsedMs % 600.0;
+        bool greenOn = cyclePos < 340.0;
         bool keepAmber = !_allFinished;
 
         return new BlinkState

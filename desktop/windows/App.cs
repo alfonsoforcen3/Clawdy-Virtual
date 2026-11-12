@@ -191,7 +191,7 @@ internal sealed class TrayHost : IAsyncDisposable
             if (active) { _collector.Retry(); RestorePendingCard(); }
         };
         _tray.PlacementChanged += () => { if (_card.IsVisible && _sessionActive) ShowCard(false); };
-        _tick = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
+        _tick = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(60) };
         _tick.Tick += (_, _) => Tick();
         _desktopPill.Show();
     }
