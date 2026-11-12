@@ -31,6 +31,7 @@ if [[ -f "$repo_dir/scripts/status_core.py" ]]; then
   cp -X "$repo_dir/scripts/status_core.py" "$bundle/Contents/Resources/status_core.py"
 fi
 cp -X "$source_dir/Assets/ClawdyProduct.png" "$bundle/Contents/Resources/ClawdyProduct.png"
+cp -X "$source_dir/Assets/ClawdyProMax.png" "$bundle/Contents/Resources/ClawdyProMax.png"
 cp -X "$source_dir/Info.plist" "$bundle/Contents/Info.plist"
 cp -X "$repo_dir/scripts/update_virtual_clawdy.py" "$bundle/Contents/Resources/update_virtual_clawdy.py"
 revision=""

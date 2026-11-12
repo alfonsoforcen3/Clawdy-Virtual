@@ -5,10 +5,10 @@ import Darwin
 
 // Private prototype renderer. Compile with Shared.swift; stdin is the only input.
 // Contract: ParentMessage(type: snapshot/preferences/ping), main-queue ChildMessage pong.
-// The overlay uses a stylized vector mascot.
+// Artwork uses the Clawdy Pro Max website mockup.
 
-private let rendererSize = NSSize(width: 196, height: 40)
-private let rendererExpandedSize = NSSize(width: 252, height: 66)
+private let rendererSize = NSSize(width: 346, height: 68)
+private let rendererExpandedSize = NSSize(width: 346, height: 96)
 
 private func presentationSize(_ state: ClawdyState, paused: Bool = false, moveMode: Bool = false) -> NSSize {
     moveMode || (!paused && (state == .attention || state == .error)) ? rendererExpandedSize : rendererSize
@@ -62,18 +62,16 @@ private extension NSColor {
 
 private struct StateStyle {
     let title: String
-    let accent: NSColor
     let phrase: String
-    let symbol: String
     static func forState(_ state: ClawdyState) -> StateStyle {
         switch state {
-        case .idle: return StateStyle(title: "All quiet", accent: .rgb(122, 132, 145), phrase: "A little quiet. A little Clawdy.", symbol: "moon.zzz.fill")
-        case .working: return StateStyle(title: "Working", accent: .rgb(221, 160, 50), phrase: "A few things are taking shape.", symbol: "sparkle")
-        case .ready: return StateStyle(title: "Ready", accent: .rgb(66, 162, 109), phrase: "Your next move.", symbol: "checkmark")
-        case .attention: return StateStyle(title: "Your input", accent: .rgb(215, 118, 70), phrase: "A small nudge is needed.", symbol: "hand.raised.fill")
-        case .error: return StateStyle(title: "Needs a look", accent: .rgb(207, 82, 78), phrase: "Something needs a little care.", symbol: "exclamationmark")
-        case .disconnected: return StateStyle(title: "Disconnected", accent: .rgb(135, 141, 152), phrase: "Waiting for a fresh signal.", symbol: "link.badge.plus")
-        case .uncertain: return StateStyle(title: "Unconfirmed", accent: .rgb(158, 137, 185), phrase: "Last report. Current status unknown.", symbol: "questionmark")
+        case .idle: return StateStyle(title: "All quiet", phrase: "A little quiet. A little Clawdy.")
+        case .working: return StateStyle(title: "Working", phrase: "A few things are taking shape.")
+        case .ready: return StateStyle(title: "Ready", phrase: "Your next move.")
+        case .attention: return StateStyle(title: "Your input", phrase: "A small nudge is needed.")
+        case .error: return StateStyle(title: "Needs a look", phrase: "Something needs a little care.")
+        case .disconnected: return StateStyle(title: "Disconnected", phrase: "Waiting for a fresh signal.")
+        case .uncertain: return StateStyle(title: "Unconfirmed", phrase: "Last report. Current status unknown.")
         }
     }
 }
@@ -94,18 +92,6 @@ private final class ClawdyCanvas: NSView {
         let names = providerLabels
         return names.isEmpty ? nil : names[providerRotationIndex % names.count]
     }
-    var providerSubtitle: String? {
-        guard !paused else { return nil }
-        let names = providerLabels
-        if snapshot.state == .uncertain && snapshot.working_count > 0, let first = names.first {
-            return first + (names.count > 1 ? " +\(names.count-1)" : "")
-        }
-        if snapshot.state == .working && names.count > 1 {
-            return "+\(names.count-1) \(names.count == 2 ? "app" : "apps")"
-        }
-        return nil
-    }
-    var visibleAccent: NSColor = .rgb(135, 141, 152)
     private var dark: Bool { effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua }
     override var isOpaque: Bool { false }
     override var acceptsFirstResponder: Bool { false }
@@ -146,94 +132,157 @@ private final class ClawdyCanvas: NSView {
         let paragraph = NSMutableParagraphStyle(); paragraph.alignment = alignment; paragraph.lineBreakMode = .byTruncatingTail
         (value as NSString).draw(in: rect, withAttributes: [.font: NSFont.systemFont(ofSize: size, weight: weight), .foregroundColor: color, .paragraphStyle: paragraph])
     }
+    // These fixed vector paths match the Windows pill. SVG coordinates use a downward Y axis.
+    private static let providerMarks = [
+        "Codex": vectorMark("M 13.2,20 C 12.67,20 12.16,19.9 11.68,19.7 C 11.2,19.49 10.78,19.21 10.4,18.85 C 10,18.99 9.58,19.06 9.14,19.06 C 8.43,19.06 7.76,18.88 7.16,18.53 C 6.55,18.18 6.06,17.7 5.68,17.09 C 5.32,16.48 5.14,15.8 5.14,15.06 C 5.14,14.75 5.18,14.41 5.27,14.05 C 4.84,13.65 4.51,13.2 4.28,12.69 C 4.04,12.17 3.92,11.62 3.92,11.06 C 3.92,10.48 4.05,9.93 4.29,9.39 C 4.54,8.86 4.88,8.4 5.32,8.02 C 5.76,7.62 6.28,7.35 6.87,7.2 C 6.99,6.59 7.23,6.05 7.6,5.57 C 7.99,5.08 8.46,4.69 9.01,4.42 C 9.57,4.14 10.16,4 10.79,4 C 11.32,4 11.83,4.1 12.31,4.3 C 12.79,4.51 13.21,4.79 13.59,5.15 C 13.99,5.01 14.41,4.94 14.85,4.94 C 15.57,4.94 16.23,5.12 16.84,5.47 C 17.44,5.82 17.93,6.3 18.29,6.91 C 18.67,7.52 18.85,8.2 18.85,8.94 C 18.85,9.25 18.81,9.59 18.72,9.95 C 19.15,10.35 19.48,10.81 19.72,11.33 C 19.95,11.84 20.07,12.38 20.07,12.94 C 20.07,13.52 19.95,14.07 19.7,14.61 C 19.45,15.14 19.11,15.61 18.66,16 C 18.22,16.38 17.71,16.65 17.12,16.8 C 17.01,17.41 16.76,17.95 16.37,18.43 C 16,18.92 15.53,19.31 14.98,19.58 C 14.43,19.86 13.83,20 13.2,20 Z " +
+            "M 9.28,17.82 C 9.79,17.82 10.23,17.71 10.61,17.49 L 13.51,15.82 C 13.63,15.75 13.68,15.65 13.68,15.52 V 14.4 L 10.12,16.45 C 9.79,16.64 9.45,16.64 9.12,16.45 L 6.37,14.86 C 6.37,14.93 6.37,14.99 6.37,15.06 C 6.37,15.51 6.49,15.99 6.74,16.43 C 7,16.86 7.35,17.19 7.8,17.44 C 8.24,17.7 8.74,17.82 9.28,17.82 Z " +
+            "M 9.43,15.22 C 9.55,15.27 9.66,15.27 9.78,15.22 L 10.76,14.67 L 7.2,12.59 C 6.87,12.41 6.71,12.12 6.71,11.73 V 8.58 C 6.24,8.82 5.87,9.17 5.59,9.62 C 5.32,10.05 5.19,10.54 5.19,11.07 C 5.19,11.57 5.31,12.05 5.56,12.51 C 5.81,12.96 6.14,13.3 6.55,13.54 L 9.43,15.22 Z " +
+            "M 13.19,18.75 C 13.73,18.75 14.22,18.63 14.66,18.38 C 15.1,18.14 15.44,17.8 15.68,17.38 C 15.94,16.95 16.07,16.47 16.07,15.95 V 12.62 C 16.07,12.49 16.01,12.38 15.89,12.32 L 14.92,11.73 V 15.86 C 14.92,16.25 14.75,16.54 14.42,16.72 L 11.68,18.3 C 12.15,18.6 12.65,18.75 13.19,18.75 Z " +
+            "M 13.68,13.01 V 10.99 L 12,10.03 L 10.31,10.99 V 13.01 L 12,13.97 L 13.68,13.01 Z " +
+            "M 9.08,8.14 C 9.08,7.75 9.24,7.46 9.57,7.28 L 12.31,5.7 C 11.84,5.4 11.34,5.25 10.8,5.25 C 10.27,5.25 9.79,5.37 9.35,5.62 C 8.91,5.86 8.56,6.2 8.31,6.62 C 8.06,7.05 7.94,7.53 7.94,8.05 V 11.36 C 7.94,11.49 8,11.59 8.12,11.68 L 9.08,12.27 V 8.14 Z " +
+            "M 17.3,15.42 C 17.76,15.19 18.12,14.85 18.39,14.4 C 18.67,13.95 18.8,13.46 18.8,12.93 C 18.8,12.43 18.68,11.95 18.42,11.5 C 18.17,11.05 17.85,10.7 17.44,10.46 L 14.56,8.8 C 14.44,8.74 14.33,8.74 14.21,8.8 L 13.24,9.33 L 16.8,11.42 C 16.97,11.52 17.1,11.64 17.17,11.78 C 17.26,11.9 17.3,12.07 17.3,12.27 V 15.42 Z " +
+            "M 13.88,7.52 C 14.21,7.32 14.54,7.32 14.87,7.52 L 17.62,9.14 C 17.62,9.1 17.62,9.07 17.62,9.04 C 17.62,8.55 17.5,8.09 17.25,7.65 C 17.02,7.2 16.68,6.84 16.23,6.58 C 15.79,6.31 15.28,6.18 14.71,6.18 C 14.21,6.18 13.76,6.29 13.38,6.51 L 10.48,8.18 C 10.37,8.25 10.31,8.35 10.31,8.48 V 9.6 L 13.88,7.52 Z"),
+        "Claude": vectorMark("M 16,3 L 18.2,11.5 L 26.5,8.5 L 21.5,15 L 29,18 L 21.5,21 L 26.5,27.5 L 18.2,24.5 L 16,33 L 13.8,24.5 L 5.5,27.5 L 10.5,21 L 3,18 L 10.5,15 L 5.5,8.5 L 13.8,11.5 Z"),
+        "Gemini": vectorMark("M 16,2 C 16,9.5 9.5,16 2,16 C 9.5,16 16,22.5 16,30 C 16,22.5 22.5,16 30,16 C 22.5,16 16,9.5 16,2 Z"),
+        "Cursor": vectorMark("M 16,4 L 27,10 L 27,22 L 16,28 L 5,22 L 5,10 Z M 16,4 L 16,28 M 5,10 L 27,22 M 27,10 L 5,22"),
+    ]
+
+    private static func vectorMark(_ source: String) -> CGPath {
+        let scanner = Scanner(string: source.replacingOccurrences(of: ",", with: " "))
+        scanner.locale = Locale(identifier: "en_US_POSIX")
+        let path = CGMutablePath()
+        var current = CGPoint.zero
+        func point() -> CGPoint {
+            CGPoint(x: scanner.scanDouble() ?? 0, y: scanner.scanDouble() ?? 0)
+        }
+        while let command = scanner.scanCharacters(from: CharacterSet(charactersIn: "MLCHVZ")) {
+            switch command {
+            case "M": current = point(); path.move(to: current)
+            case "L": current = point(); path.addLine(to: current)
+            case "C":
+                let first = point(), second = point()
+                current = point()
+                path.addCurve(to: current, control1: first, control2: second)
+            case "H": current.x = scanner.scanDouble() ?? 0; path.addLine(to: current)
+            case "V": current.y = scanner.scanDouble() ?? 0; path.addLine(to: current)
+            case "Z": path.closeSubpath()
+            default: return path
+            }
+        }
+        return path
+    }
+
+    private func drawProvider(_ provider: String, at origin: CGPoint) {
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        let colors: [String: NSColor] = [
+            "Codex": .rgb(46, 205, 163), "Claude": .rgb(237, 155, 113),
+            "Gemini": .rgb(110, 158, 255), "Cursor": .rgb(80, 205, 249)
+        ]
+        guard let mark = Self.providerMarks[provider], let color = colors[provider] else {
+            text("•", NSRect(x: origin.x, y: origin.y, width: 26, height: 25),
+                 size: 18, color: .rgb(191, 185, 188), alignment: .center)
+            return
+        }
+        let box = mark.boundingBoxOfPath
+        guard !box.isEmpty else { return }
+        let scale = 24 / max(box.width, box.height)
+        context.saveGState()
+        context.translateBy(x: origin.x + 13 - box.midX * scale, y: origin.y + 13 + box.midY * scale)
+        context.scaleBy(x: scale, y: -scale)
+        context.addPath(mark)
+        if provider == "Cursor" {
+            context.setStrokeColor(color.cgColor)
+            context.setLineWidth(2)
+            context.setLineJoin(.round)
+            context.strokePath()
+        } else {
+            context.setFillColor(color.cgColor)
+            context.fillPath()
+        }
+        context.restoreGState()
+    }
+
+    private static let proMaxArtwork = Bundle.main.url(forResource: "ClawdyProMax", withExtension: "png")
+        .flatMap { NSImage(contentsOf: $0) }
+
+    private func drawProMax(at origin: NSPoint) {
+        guard let image = Self.proMaxArtwork else { return }
+        let width: CGFloat = 82
+        let height = width * image.size.height / image.size.width
+        image.draw(in: NSRect(x: origin.x, y: origin.y - height / 2, width: width, height: height))
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-        let width = bounds.width, height = bounds.height
-        guard width > 3 && height > 3 else { return }
-        let expanded = height > 48
+        guard bounds.width > 3 && bounds.height > 3,
+              let context = NSGraphicsContext.current?.cgContext else { return }
+        let expanded = moveMode || (!paused && (snapshot.state == .attention || snapshot.state == .error))
+        let size = expanded ? rendererExpandedSize : rendererSize
+        let scaleToFit = min(bounds.width / size.width, bounds.height / size.height)
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.translateBy(x: (bounds.width - size.width * scaleToFit) / 2,
+                            y: (bounds.height - size.height * scaleToFit) / 2)
+        context.scaleBy(x: scaleToFit, y: scaleToFit)
+        let width = size.width, height = size.height
         let style = StateStyle.forState(snapshot.state)
-        let accent = paused ? NSColor.rgb(150, 155, 165) : visibleAccent
-        let capsule = bounds.insetBy(dx: 1, dy: 1)
-        let outline = rounded(capsule, expanded ? 21 : 19)
-        let upper = dark ? NSColor.rgb(37, 39, 46) : NSColor.rgb(43, 45, 52)
-        let lower = dark ? NSColor.rgb(14, 16, 21) : NSColor.rgb(22, 24, 30)
-        NSGradient(starting: lower, ending: upper)?.draw(in: outline, angle: 90)
-        let border = rounded(capsule.insetBy(dx: 0.5, dy: 0.5), expanded ? 20.5 : 18.5)
-        border.lineWidth = 0.65; NSColor.white.withAlphaComponent(dark ? 0.12 : 0.16).setStroke(); border.stroke()
-        // Compact top row stays the same height in the expanded island.
-        let rowY = height - 29
-        let iconOrigin = NSPoint(x: 12, y: rowY+1)
-        let s: CGFloat = 45/52, scale: CGFloat = 0.36
-        func p(_ x: CGFloat, _ z: CGFloat) -> NSPoint {
-            NSPoint(x: iconOrigin.x + 10.3 + x*scale, y: iconOrigin.y+z*scale)
+        let theme: (upper: NSColor, lower: NSColor, rim: NSColor)
+        switch paused ? .idle : snapshot.state {
+        case .working: theme = (.rgb(74, 38, 22), .rgb(28, 16, 16), .rgb(255, 185, 35))
+        case .ready: theme = (.rgb(20, 56, 34), .rgb(8, 26, 18), .rgb(50, 220, 130))
+        case .attention, .error: theme = (.rgb(74, 20, 24), .rgb(30, 8, 12), .rgb(255, 77, 77))
+        default: theme = (.rgb(40, 27, 25), .rgb(18, 14, 15), .rgb(225, 148, 109))
         }
-        let body: [(CGFloat, CGFloat)] = [
-            (-27*s,0),(-21*s,0),(-21*s,13*s),(-15*s,13*s),(-15*s,0),(-9*s,0),
-            (-9*s,13*s),(9*s,13*s),(9*s,0),(15*s,0),(15*s,13*s),(21*s,13*s),
-            (21*s,0),(27*s,0),(27*s,26*s),(33*s,26*s),(33*s,39*s),(27*s,39*s),
-            (27*s,45),(-27*s,45),(-27*s,39*s),(-33*s,39*s),(-33*s,26*s),(-27*s,26*s)]
-        NSGradient(starting: .rgb(229, 145, 110), ending: .rgb(196, 99, 73))?.draw(in: polygon(body.map { p($0.0,$0.1) }), angle: -90)
-        let eye = NSColor.rgb(31, 27, 29)
-        for x: CGFloat in [-18*s,18*s] {
-            let center = p(x,35.75*s), side: CGFloat = 2.2
-            if snapshot.state == .error && !paused {
-                let cross = NSBezierPath(); cross.move(to: NSPoint(x:center.x-1,y:center.y-1)); cross.line(to:NSPoint(x:center.x+1,y:center.y+1))
-                cross.move(to:NSPoint(x:center.x+1,y:center.y-1)); cross.line(to:NSPoint(x:center.x-1,y:center.y+1)); cross.lineWidth=0.85; eye.setStroke(); cross.stroke()
-            } else { fill(rounded(NSRect(x:center.x-side/2,y:center.y-side/2,width:side,height:side),0.2),eye) }
-        }
+        let capsule = NSRect(x: 1, y: 1, width: width - 2, height: height - 2)
+        let radius = expanded ? CGFloat(32) : capsule.height / 2
+        let outline = rounded(capsule, radius)
+        NSGradient(starting: theme.lower, ending: theme.upper)?.draw(in: outline, angle: 90)
+        let border = rounded(capsule.insetBy(dx: 0.5, dy: 0.5), radius - 0.5)
+        border.lineWidth = 1
+        theme.rim.withAlphaComponent(dark ? 0.48 : 0.60).setStroke()
+        border.stroke()
+        let rowY = height - 34
+        drawProMax(at: NSPoint(x: 10, y: rowY))
         // The physical traffic light is laid on its side, with three lenses in
         // one horizontal head. The island itself stays fixed; no hover loop.
-        let strip = NSRect(x: 42, y: rowY+1, width: 50, height: 17)
-        fill(rounded(strip,4), .rgb(9,11,15))
-        let ring = rounded(strip.insetBy(dx:0.5,dy:0.5),3.5); ring.lineWidth=0.6; NSColor.white.withAlphaComponent(0.055).setStroke(); ring.stroke()
-        for (index, base): (Int, NSColor) in [(0,.rgb(239,94,87)),(1,.rgb(245,187,62)),(2,.rgb(92,205,143))] {
-            let active = !paused && ((index == 0 && (snapshot.state == .attention || snapshot.state == .error)) || (index == 1 && snapshot.state == .working) || (index == 2 && snapshot.state == .ready))
-            let lens = NSRect(x: strip.minX+6+CGFloat(index)*14.5,y:strip.minY+4.5,width:8,height:8)
+        for (index, base): (Int, NSColor) in [(0,.rgb(255,94,87)),(1,.rgb(255,191,61)),(2,.rgb(92,226,143))] {
+            let active = !paused && ((index == 0 && (snapshot.state == .attention || snapshot.state == .error))
+                || (index == 1 && snapshot.state == .working) || (index == 2 && snapshot.state == .ready))
+            let lens = NSRect(x: width - 79 + CGFloat(index) * 21, y: rowY - 6.5, width: 13, height: 13)
             if active {
                 NSGraphicsContext.saveGraphicsState()
-                let glow=NSShadow();glow.shadowColor=base.withAlphaComponent(0.6);glow.shadowBlurRadius=7;glow.shadowOffset = .zero;glow.set()
-                fill(NSBezierPath(ovalIn:lens),base)
+                let glow = NSShadow()
+                glow.shadowColor = base.withAlphaComponent(0.75)
+                glow.shadowBlurRadius = 10
+                glow.shadowOffset = .zero
+                glow.set()
+                fill(NSBezierPath(ovalIn: lens), base)
                 NSGraphicsContext.restoreGraphicsState()
-                fill(NSBezierPath(ovalIn:NSRect(x:lens.minX+2,y:lens.maxY-3,width:3.5,height:1.3)),.white.withAlphaComponent(0.4))
-            } else { fill(NSBezierPath(ovalIn:lens),base.mixed(with:.rgb(22,25,31),amount:0.83)) }
-        }
-        let title: String
-        if paused { title = "Paused" }
-        else {
-            switch snapshot.state {
-            case .idle: title = "Quiet"
-            case .working: title = displayedProvider ?? "Working"
-            case .attention: title = "Your input"
-            case .error: title = "Needs a look"
-            case .disconnected: title = "Offline"
-            case .uncertain: title = "Unclear"
-            default: title = style.title
+            } else {
+                fill(NSBezierPath(ovalIn: lens), base.mixed(with: theme.lower, amount: 0.80))
             }
         }
-        let titleWidth = max(42,width-151)
-        text(title,NSRect(x:101,y:rowY+2,width:titleWidth,height:14),size:10.5,weight:.semibold,color:.rgb(243,244,247))
-        let badge = NSRect(x:width-50,y:rowY+2,width:39,height:14)
-        fill(rounded(badge,7),accent.withAlphaComponent(0.15))
-        text(workingLabel(snapshot.working_count),badge.offsetBy(dx:0,dy:1),size:7.8,weight:.semibold,color:accent,alignment:.center)
-        if let subtitle = providerSubtitle {
-            // Uncertain WIP retains a static reported-app hint, never a rotation
-            // or freshness claim. Expanded and accessibility retain all names.
-            text(subtitle,NSRect(x:101,y:rowY-5,width:titleWidth,height:7),size:5.5,weight:.medium,color:.rgb(151,157,172))
-        }
-        if snapshot.demo {
-            text("DEMO",NSRect(x:width-36,y:height-10,width:25,height:6.5),size:5.4,weight:.semibold,color:.rgb(159,164,177),alignment:.center)
-        }
+
+        let provider = !paused && snapshot.working_count > 0 ? displayedProvider : nil
+        if let provider { drawProvider(provider, at: CGPoint(x: 92, y: rowY - 13)) }
+        let textX: CGFloat = provider == nil ? 94 : 128
+        let textWidth = width - textX - 94
+        let title = paused ? "Paused" : provider ?? style.title
+        text(title, NSRect(x: textX, y: rowY + 1, width: textWidth, height: 20),
+             size: 15, weight: .semibold, color: .rgb(250, 244, 242))
+        let more = providerLabels.count - 1
+        let count = workingLabel(snapshot.working_count)
+        let subtitle = provider != nil && more > 0 ? "\(count) · +\(more) \(more == 1 ? "app" : "apps")" : count
+        let details = snapshot.demo ? subtitle + " · Demo" : subtitle
+        text(details, NSRect(x: textX, y: rowY - 17, width: textWidth, height: 15),
+             size: 11, weight: .medium, color: .rgb(213, 196, 193))
         if expanded {
-            let phrase = moveMode ? "Drag to move · finish in the menu" : (paused ? "Taking a little breather." : (snapshot.phrase.isEmpty ? style.phrase : snapshot.phrase))
-            let divider = NSBezierPath(); divider.move(to:NSPoint(x:15,y:28)); divider.line(to:NSPoint(x:width-15,y:28)); divider.lineWidth=0.5; NSColor.white.withAlphaComponent(0.07).setStroke(); divider.stroke()
-            let providers = providerLabels.joined(separator:" · ")
-            text(phrase,NSRect(x:15,y:providers.isEmpty ? 10 : 16,width:width-30,height:12),size:8.5,weight:.medium,color:.rgb(187,192,204),alignment:.center)
-            if !providers.isEmpty {
-                text(providers,NSRect(x:15,y:5,width:width-30,height:9),size:7.2,weight:.medium,color:.rgb(149,157,174),alignment:.center)
-            }
+            let phrase = moveMode ? "Drag to move · finish in the menu" : (snapshot.phrase.isEmpty ? style.phrase : snapshot.phrase)
+            text(phrase, NSRect(x: 20, y: 10, width: width - 40, height: 17),
+                 size: 11, color: .rgb(226, 206, 206), alignment: .center)
         }
         if moveMode {
-            let boundary=rounded(capsule.insetBy(dx:1,dy:1),expanded ? 20 : 18);boundary.lineWidth=0.8;boundary.setLineDash([2,3],count:2,phase:0);accent.withAlphaComponent(0.7).setStroke();boundary.stroke()
+            let boundary=rounded(capsule.insetBy(dx:1,dy:1),radius - 1);boundary.lineWidth=0.8;boundary.setLineDash([2,3],count:2,phase:0);theme.rim.withAlphaComponent(0.7).setStroke();boundary.stroke()
         }
     }
 }
@@ -427,7 +476,6 @@ private final class RendererDelegate: NSObject, NSApplicationDelegate, NSWindowD
         if hidden || sleeping {
             if panel.isVisible { panel.orderOut(nil) }
         } else if !panel.isVisible { panel.orderFrontRegardless() }
-        canvas.visibleAccent = StateStyle.forState(canvas.snapshot.state).accent
         // Stable camera-adjacent anchor. Only bounded state transitions animate;
         // there is no hover, recurring display timer or animation polling.
         let animate = !hidden && !sleeping && !paused && !canvas.reducedMotion && !moveMode
@@ -580,11 +628,11 @@ private final class RendererDelegate: NSObject, NSApplicationDelegate, NSWindowD
         try check(providerRotationTimer == nil,"Single app needs no rotation clock")
         var uncertain = work; uncertain.state = .uncertain
         _ = apply(uncertain); updatePresentation()
-        try check(canvas.providerSubtitle == "Codex +1" && providerRotationTimer == nil,"Uncertain active records retain static app hint without rotation")
+        try check(canvas.displayedProvider == "Codex" && canvas.providerLabels.count == 2 && providerRotationTimer == nil,"Uncertain active records retain static app hint without rotation")
         try check(canvas.accessibilityLabel()?.contains("Unconfirmed") == true,"Uncertain app hint preserves unconfirmed status")
         uncertain.working_count = 0
         _ = apply(uncertain); updatePresentation()
-        try check(canvas.providerSubtitle == nil,"Uncertain zero-WIP state has no active-app hint")
+        try check(canvas.snapshot.working_count == 0,"Uncertain zero-WIP state has no active-app hint")
         passed.append("production preference/lifecycle handlers: hidden, paused, reduced motion, move, sleep/wake and screen change (injected only)")
         passed.append("animation: finite <=250 ms; no hover/polling; mixed-app rotation only every 5 s while visible working; reduced motion stops it")
         try check(NSWorkspace.shared.frontmostApplication?.processIdentifier == initialFrontmost && NSApp.isActive == initialActive, "Fixture completion must not change foreground application")
@@ -602,7 +650,6 @@ private func writePreview(_ path: String, state: ClawdyState, dark: Bool, count:
     view.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
     view.snapshot = ClawdySnapshot(version: 1, instance_id: "preview", revision: 1, state: state,
                                    working_count: count, providers: ["codex", "claude"], demo: true, phrase: "")
-    view.visibleAccent = StateStyle.forState(state).accent
     view.reducedMotion = true
     guard let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width*2), pixelsHigh: Int(size.height*2), bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
           let context = NSGraphicsContext(bitmapImageRep: bitmap) else { throw NSError(domain: "ClawdyPreview", code: 1) }
