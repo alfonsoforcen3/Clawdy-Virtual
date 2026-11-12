@@ -60,7 +60,7 @@ class LocalChatRouteTests(unittest.TestCase):
             path.parent.mkdir(parents=True)
             try:
                 path.symlink_to(target)
-            except PermissionError as error:
+            except (PermissionError, OSError) as error:
                 if getattr(error, 'winerror', None) == 1314:
                     self.skipTest('Windows runner does not grant symbolic-link creation')
                 raise

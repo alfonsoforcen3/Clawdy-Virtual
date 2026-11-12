@@ -121,6 +121,7 @@ internal sealed class VirtualUpdateClient(Func<CancellationToken, Task<string>> 
                 output.Write(buffer, 0, count);
             }
             await process.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
+            await stderr.ConfigureAwait(false);
             if (process.ExitCode != 0) return Unavailable("Clawdy could not finish the update. Check Python and try again.");
             return Decode(output.ToArray(), stage, SourceRevision!, LocalRoot);
         }

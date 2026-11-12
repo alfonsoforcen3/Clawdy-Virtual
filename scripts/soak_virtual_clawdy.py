@@ -106,9 +106,9 @@ def run_soak(duration, interval, report_path, *, command=None):
         process=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
                                  stderr=subprocess.DEVNULL,env=environment)
         reader=threading.Thread(target=read_output,name='clawdy-soak-reader',daemon=True);reader.start()
-        while time.monotonic()-started<duration:
+        while (time.monotonic()-started<duration) or (report['records']==0 and report['status']=='running'):
             now=time.monotonic()
-            try: kind,raw=inbox.get(timeout=min(.25,max(.001,duration-(now-started))))
+            try: kind,raw=inbox.get(timeout=min(.25,max(.001,duration-(now-started) if time.monotonic()-started<duration else .5)))
             except queue.Empty:
                 if time.monotonic()-last>max(3,interval*3): fail('collector-output-timeout');break
                 continue
