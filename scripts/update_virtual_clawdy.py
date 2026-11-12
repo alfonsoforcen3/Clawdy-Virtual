@@ -132,7 +132,7 @@ def stage_update(revision, current, app):
             if dotnet_home.exists():
                 build_env["DOTNET_ROOT"] = str(dotnet_home)
                 build_env["PATH"] = str(dotnet_home) + os.pathsep + build_env.get("PATH", "")
-            run([str(powershell), "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
+            run([str(powershell), "-NoLogo", "-NoProfile", "-NonInteractive", "-File",
                  str(source / "desktop/windows/build.ps1"), "-Output", str(build)], env=build_env)
         if not (build / executable).is_file():
             raise UpdateUnavailable("The build did not produce a Clawdy app.")

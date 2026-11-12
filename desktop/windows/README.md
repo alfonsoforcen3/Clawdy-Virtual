@@ -83,8 +83,8 @@ Do not install that companion just to obtain a demo.
 
 Open Clawdy's tray menu and choose the update action. Clawdy checks the public
 repository's `main` branch and builds the exact revision after GitHub checks
-pass. Enable **Automatic Updates** to prepare builds in the background and open
-the prepared build on the next normal launch. Choose the restart action to switch
+pass. **Automatic Updates** prepares builds in the background by default and opens
+the prepared build on the next normal launch. Use the tray toggle to turn it off. Choose the restart action to switch
 sooner. The previous build remains available; run it with `--skip-update-handoff`
 to reopen that version for recovery. If Automatic Updates is off, point your
 shortcut at the prepared executable under
