@@ -1,4 +1,3 @@
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,7 +11,7 @@ namespace Clawdy.Windows.UI;
 
 /// <summary>
 /// A prominent, beautiful, draggable always-on-top desktop companion widget
-/// showcasing the official Clawdy brand mascot and full-sized traffic light lamps.
+/// showcasing the official Clawdy brand mascot, cycling working AI logos, and full-sized traffic light lamps.
 /// </summary>
 public sealed class DesktopPillWindow : Window
 {
@@ -20,20 +19,28 @@ public sealed class DesktopPillWindow : Window
     private readonly Ellipse _redLamp;
     private readonly Ellipse _amberLamp;
     private readonly Ellipse _greenLamp;
+    private readonly Border _providerBox;
+    private readonly Path _providerPath;
     private readonly TextBlock _brandTitle;
-    private readonly TextBlock _stateTitle;
     private readonly TextBlock _detailLabel;
     private bool _reducedMotion;
 
     private static readonly ImageSource? CachedProduct = LoadProductImage();
+
+    // Provider Vector Geometries
+    private static readonly Geometry GeminiGeom = Geometry.Parse("M 16,2 C 16,9.5 9.5,16 2,16 C 9.5,16 16,22.5 16,30 C 16,22.5 22.5,16 30,16 C 22.5,16 16,9.5 16,2 Z");
+    private static readonly Geometry CodexGeom = Geometry.Parse("M 16,5 C 19.5,5 22.5,7 23.8,10.2 C 24.8,10 25.8,10.2 26.6,10.8 C 27.8,11.8 28.3,13.4 28,15 C 29.2,16 29.8,17.6 29.5,19.2 C 29,21 27.6,22.2 26,22.5 C 26,23.5 25.5,24.5 24.8,25.2 C 23.6,26.4 21.8,26.8 20.2,26.2 C 19.2,27.5 17.6,28.2 16,28 C 14.4,28.2 12.8,27.5 11.8,26.2 C 10.2,26.8 8.4,26.4 7.2,25.2 C 6.5,24.5 6,23.5 6,22.5 C 4.4,22.2 3,21 2.5,19.2 C 2.2,17.6 2.8,16 4,15 C 3.7,13.4 4.2,11.8 5.4,10.8 C 6.2,10.2 7.2,10 8.2,10.2 C 9.5,7 12.5,5 16,5 Z");
+    private static readonly Geometry ClaudeGeom = Geometry.Parse("M 16,3 L 18.2,11.5 L 26.5,8.5 L 21.5,15 L 29,18 L 21.5,21 L 26.5,27.5 L 18.2,24.5 L 16,33 L 13.8,24.5 L 5.5,27.5 L 10.5,21 L 3,18 L 10.5,15 L 5.5,8.5 L 13.8,11.5 Z");
+    private static readonly Geometry CursorGeom = Geometry.Parse("M 16,4 L 27,10 L 27,22 L 16,28 L 5,22 L 5,10 Z M 16,4 L 16,28 M 5,10 L 27,22 M 27,10 L 5,22");
+    private static readonly Geometry ReadyGeom = Geometry.Parse("M 8,16 L 14,22 L 25,9");
 
     public DesktopPillWindow(Action openCard)
     {
         _openCard = openCard;
 
         Title = "Virtual Clawdy Desktop Companion";
-        Width = 280;
-        Height = 72;
+        Width = 340;
+        Height = 74;
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -53,9 +60,9 @@ public sealed class DesktopPillWindow : Window
         var root = new Border
         {
             CornerRadius = new CornerRadius(24),
-            Background = new SolidColorBrush(Color.FromArgb(244, 23, 26, 33)),
+            Background = new SolidColorBrush(Color.FromArgb(244, 21, 24, 31)),
             BorderBrush = new SolidColorBrush(Color.FromArgb(65, 255, 255, 255)),
-            BorderThickness = new Thickness(1.5),
+            BorderThickness = new Thickness(1.4),
             Cursor = Cursors.SizeAll,
             Effect = new DropShadowEffect
             {
@@ -79,24 +86,25 @@ public sealed class DesktopPillWindow : Window
             }
         };
 
-        var mainGrid = new Grid { Margin = new Thickness(10, 8, 14, 8) };
-        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // Mascot avatar
-        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Brand & Status text
-        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // 3 Large Traffic Lights
+        var mainGrid = new Grid { Margin = new Thickness(10, 8, 12, 8) };
+        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // 0: Mascot avatar (48px)
+        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // 1: Active AI provider badge (32px)
+        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // 2: Text (spacious, no overlap)
+        mainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // 3: Traffic Lights
 
-        // 1. OFFICIAL CLAWDY BRAND AVATAR (52x52px with warm cream background)
+        // 1. OFFICIAL CLAWDY BRAND AVATAR (48x48px with warm cream background)
         var avatarBorder = new Border
         {
-            Width = 54,
-            Height = 54,
-            CornerRadius = new CornerRadius(14),
+            Width = 50,
+            Height = 50,
+            CornerRadius = new CornerRadius(13),
             Background = new SolidColorBrush(Color.FromRgb(245, 232, 212)),
             Cursor = Cursors.Hand,
-            Margin = new Thickness(0, 0, 10, 0)
+            Margin = new Thickness(0, 0, 8, 0)
         };
         avatarBorder.MouseLeftButtonDown += (s, e) => { e.Handled = true; _openCard(); };
 
-        var avatarGrid = new Grid { Margin = new Thickness(4) };
+        var avatarGrid = new Grid { Margin = new Thickness(3) };
         if (CachedProduct != null)
         {
             avatarGrid.Children.Add(new Image
@@ -110,7 +118,7 @@ public sealed class DesktopPillWindow : Window
             avatarGrid.Children.Add(new TextBlock
             {
                 Text = "C",
-                FontSize = 26,
+                FontSize = 24,
                 FontWeight = FontWeights.Black,
                 Foreground = new SolidColorBrush(Color.FromRgb(225, 148, 109)),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -121,56 +129,79 @@ public sealed class DesktopPillWindow : Window
         Grid.SetColumn(avatarBorder, 0);
         mainGrid.Children.Add(avatarBorder);
 
-        // 2. BRAND & STATUS TEXT PANEL
+        // 2. WORKING AI PROVIDER BADGE (Iterates through working AIs like Clawdy Pro Max)
+        _providerBox = new Border
+        {
+            Width = 34,
+            Height = 34,
+            CornerRadius = new CornerRadius(10),
+            Background = new SolidColorBrush(Color.FromRgb(28, 32, 42)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0),
+            Cursor = Cursors.Hand
+        };
+        _providerBox.MouseLeftButtonDown += (s, e) => { e.Handled = true; _openCard(); };
+
+        var viewbox = new Viewbox
+        {
+            Width = 20,
+            Height = 20,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        _providerPath = new Path
+        {
+            Data = GeminiGeom,
+            Fill = new SolidColorBrush(Color.FromRgb(78, 136, 245)),
+            Stretch = Stretch.Uniform
+        };
+        viewbox.Child = _providerPath;
+        _providerBox.Child = viewbox;
+
+        Grid.SetColumn(_providerBox, 1);
+        mainGrid.Children.Add(_providerBox);
+
+        // 3. BRAND & STATUS TEXT PANEL (Spacious, zero overlap with traffic lights)
         var textPanel = new StackPanel
         {
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = Cursors.Hand,
-            Margin = new Thickness(0, 0, 10, 0)
+            Margin = new Thickness(0, 0, 8, 0)
         };
         textPanel.MouseLeftButtonDown += (s, e) => { e.Handled = true; _openCard(); };
 
-        var brandRow = new StackPanel { Orientation = Orientation.Horizontal };
         _brandTitle = new TextBlock
         {
             Text = "Clawdy",
             FontSize = 13.5,
             FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush(Color.FromRgb(225, 148, 109)),
-            Margin = new Thickness(0, 0, 6, 0)
-        };
-        _stateTitle = new TextBlock
-        {
-            Text = "Idle",
-            FontSize = 13,
-            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(255, 253, 252)),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
-        brandRow.Children.Add(_brandTitle);
-        brandRow.Children.Add(_stateTitle);
 
         _detailLabel = new TextBlock
         {
             Text = "Waiting for status...",
-            FontSize = 10.5,
+            FontSize = 10,
             FontWeight = FontWeights.Medium,
-            Foreground = new SolidColorBrush(Color.FromRgb(165, 170, 182)),
+            Foreground = new SolidColorBrush(Color.FromRgb(160, 165, 178)),
             Margin = new Thickness(0, 2, 0, 0),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
-        textPanel.Children.Add(brandRow);
+        textPanel.Children.Add(_brandTitle);
         textPanel.Children.Add(_detailLabel);
 
-        Grid.SetColumn(textPanel, 1);
+        Grid.SetColumn(textPanel, 2);
         mainGrid.Children.Add(textPanel);
 
-        // 3. FULL-SIZED TRAFFIC LIGHT HOUSING (17px diameter lamps)
+        // 4. FULL-SIZED TRAFFIC LIGHT HOUSING (16px lamps, fixed width, never overlaps text)
         var trafficLightHousing = new Border
         {
             VerticalAlignment = VerticalAlignment.Center,
-            Background = new SolidColorBrush(Color.FromArgb(140, 12, 14, 18)),
+            Background = new SolidColorBrush(Color.FromArgb(160, 14, 16, 20)),
             BorderBrush = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(14),
@@ -192,7 +223,7 @@ public sealed class DesktopPillWindow : Window
         lampsPanel.Children.Add(_greenLamp);
 
         trafficLightHousing.Child = lampsPanel;
-        Grid.SetColumn(trafficLightHousing, 2);
+        Grid.SetColumn(trafficLightHousing, 3);
         mainGrid.Children.Add(trafficLightHousing);
 
         root.Child = mainGrid;
@@ -201,9 +232,9 @@ public sealed class DesktopPillWindow : Window
 
     private static Ellipse CreateLamp() => new()
     {
-        Width = 17,
-        Height = 17,
-        Margin = new Thickness(3.5, 0, 3.5, 0),
+        Width = 16,
+        Height = 16,
+        Margin = new Thickness(3, 0, 3, 0),
         Fill = new SolidColorBrush(Color.FromRgb(50, 54, 63)),
         Stroke = new SolidColorBrush(Color.FromArgb(90, 0, 0, 0)),
         StrokeThickness = 1
@@ -257,23 +288,36 @@ public sealed class DesktopPillWindow : Window
             }
         }
 
+        // Active Working AI Provider Iteration (Rotates every 3 seconds like Clawdy Pro Max OLED)
+        var activeProviders = snapshot.Providers != null && snapshot.Providers.Length > 0
+            ? snapshot.Providers
+            : (snapshot.AttentionProviders != null && snapshot.AttentionProviders.Length > 0 ? snapshot.AttentionProviders : Array.Empty<string>());
+
+        string currentProvider = "gemini";
+        if (activeProviders.Length > 0)
+        {
+            var index = (int)((second / 3) % activeProviders.Length);
+            currentProvider = activeProviders[index].ToLowerInvariant();
+        }
+
+        UpdateProviderBadge(currentProvider, snapshot.State);
+
+        var (providerDisplayName, _) = FormatProvider(currentProvider);
+
         if (finishBlink.IsBlinking)
         {
-            // Session finish blinking mode:
             SetLamp(_redLamp, false, redColor);
             SetLamp(_amberLamp, finishBlink.KeepAmberOn, amberColor);
             SetLamp(_greenLamp, finishBlink.GreenPhaseOn, greenColor);
 
             if (finishBlink.KeepAmberOn)
             {
-                _stateTitle.Text = "Working";
-                _stateTitle.Foreground = new SolidColorBrush(amberColor);
+                _brandTitle.Text = $"{providerDisplayName} · Working";
                 _detailLabel.Text = finishBlink.GreenPhaseOn ? "🎉 Session finished!" : $"{snapshot.WorkingCount} active session(s)";
             }
             else
             {
-                _stateTitle.Text = "All Done!";
-                _stateTitle.Foreground = new SolidColorBrush(greenColor);
+                _brandTitle.Text = "All Done!";
                 _detailLabel.Text = finishBlink.GreenPhaseOn ? "🎉 All sessions completed!" : "Wrapping up...";
             }
             return;
@@ -294,21 +338,90 @@ public sealed class DesktopPillWindow : Window
         SetLamp(_amberLamp, active == 1, amberColor);
         SetLamp(_greenLamp, active == 2, greenColor);
 
-        var (stateName, stateColor) = snapshot.State switch
+        var stateName = snapshot.State switch
         {
-            "working" => ("Working", amberColor),
-            "ready" => ("Ready", greenColor),
-            "attention" => ("Needs You", redColor),
-            "error" => ("Error", redColor),
-            _ => ("Idle", Color.FromRgb(165, 170, 182))
+            "working" => "Working",
+            "ready" => "Ready",
+            "attention" => "Needs You",
+            "error" => "Error",
+            _ => "Idle"
         };
 
-        _stateTitle.Text = stateName;
-        _stateTitle.Foreground = new SolidColorBrush(stateColor);
-
-        var prefix = snapshot.Demo ? "Demo · " : "";
-        _detailLabel.Text = snapshot.WorkingCount > 0
-            ? $"{prefix}{snapshot.WorkingCount} active session(s)"
-            : $"{prefix}{(snapshot.Phrase ?? "Ready for work")}";
+        if (activeProviders.Length > 0 && snapshot.State == "working")
+        {
+            _brandTitle.Text = $"{providerDisplayName} · Working";
+            _detailLabel.Text = snapshot.WorkingCount > 0
+                ? $"{snapshot.WorkingCount} active session(s)"
+                : "Active session running";
+        }
+        else if (snapshot.State == "ready")
+        {
+            _brandTitle.Text = "Clawdy · Ready";
+            _detailLabel.Text = "All work is completed";
+        }
+        else if (snapshot.State == "attention" || snapshot.State == "error")
+        {
+            _brandTitle.Text = $"{providerDisplayName} · {stateName}";
+            _detailLabel.Text = snapshot.Phrase ?? "Input required in session";
+        }
+        else
+        {
+            _brandTitle.Text = $"Clawdy · {stateName}";
+            _detailLabel.Text = snapshot.Phrase ?? "Waiting for local bridge";
+        }
     }
+
+    private void UpdateProviderBadge(string provider, string state)
+    {
+        var (name, color) = FormatProvider(provider);
+        _providerPath.Stroke = null;
+        _providerPath.StrokeThickness = 0;
+
+        switch (provider)
+        {
+            case "codex":
+                _providerPath.Data = CodexGeom;
+                _providerPath.Fill = new SolidColorBrush(Color.FromRgb(16, 163, 127)); // OpenAI green
+                _providerBox.Background = new SolidColorBrush(Color.FromRgb(15, 38, 30));
+                break;
+            case "claude":
+                _providerPath.Data = ClaudeGeom;
+                _providerPath.Fill = new SolidColorBrush(Color.FromRgb(225, 148, 109)); // Anthropic terracotta
+                _providerBox.Background = new SolidColorBrush(Color.FromRgb(42, 28, 22));
+                break;
+            case "cursor":
+                _providerPath.Data = CursorGeom;
+                _providerPath.Fill = Brushes.Transparent;
+                _providerPath.Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)); // Cursor cyan
+                _providerPath.StrokeThickness = 2;
+                _providerBox.Background = new SolidColorBrush(Color.FromRgb(18, 32, 48));
+                break;
+            case "gemini":
+            default:
+                if (state == "ready")
+                {
+                    _providerPath.Data = ReadyGeom;
+                    _providerPath.Fill = Brushes.Transparent;
+                    _providerPath.Stroke = new SolidColorBrush(Color.FromRgb(50, 220, 130));
+                    _providerPath.StrokeThickness = 2.5;
+                    _providerBox.Background = new SolidColorBrush(Color.FromRgb(16, 38, 26));
+                }
+                else
+                {
+                    _providerPath.Data = GeminiGeom;
+                    _providerPath.Fill = new SolidColorBrush(Color.FromRgb(78, 136, 245)); // Gemini blue
+                    _providerBox.Background = new SolidColorBrush(Color.FromRgb(22, 32, 54));
+                }
+                break;
+        }
+    }
+
+    private static (string Name, Color Color) FormatProvider(string provider) => provider switch
+    {
+        "codex" => ("ChatGPT", Color.FromRgb(16, 163, 127)),
+        "claude" => ("Claude", Color.FromRgb(225, 148, 109)),
+        "cursor" => ("Cursor", Color.FromRgb(56, 189, 248)),
+        "gemini" => ("Gemini", Color.FromRgb(78, 136, 245)),
+        _ => ("Clawdy", Color.FromRgb(225, 148, 109))
+    };
 }
