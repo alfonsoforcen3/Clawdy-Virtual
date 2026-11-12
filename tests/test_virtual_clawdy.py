@@ -58,6 +58,10 @@ class VirtualClawdyTests(unittest.TestCase):
         sessions['cursor:four']='R'
         self.assertEqual(core.resolve_sessions(sessions)[0],'error')
         sessions['claude:five']='B'
+        self.assertEqual(core.resolve_sessions(sessions)[0],'error')
+        del sessions['cursor:four']
+        self.assertEqual(core.resolve_sessions(sessions)[0],'working')
+        sessions['claude:two']='G'
         self.assertEqual(core.resolve_sessions(sessions)[0],'attention')
 
     def test_codex_process_fallback_is_not_an_identifiable_working_turn(self):
@@ -70,15 +74,17 @@ class VirtualClawdyTests(unittest.TestCase):
 
     def test_attention_targets_are_separate_from_working_apps(self):
         view = core.observed_view(bridge({'codex:busy':'Y', 'claude:question':'B',
-                                         'cursor:failed':'R'}, 'B'))
+                                         'cursor:failed':'R'}, 'R'))
         self.assertEqual(view['providers'], ['codex'])
         self.assertEqual(view['attention_providers'], ['claude'])
+        self.assertEqual(view['state'], 'error')
+        self.assertTrue(core.snapshot('fixture', 1, view, False)['question_pending'])
         view = core.observed_view(bridge({'codex:busy':'Y', 'cursor:failed':'R'}, 'R'))
         self.assertEqual(view['attention_providers'], ['cursor'])
         record = core.snapshot('fixture', 1, view, False)
         self.assertEqual(record['attention_providers'], ['cursor'])
         self.assertNotIn('failed', json.dumps(record))
-        for state in ('ready', 'working', 'disconnected', 'uncertain', 'idle'):
+        for state in ('ready', 'disconnected', 'uncertain', 'idle'):
             self.assertEqual(core.attention_providers({'claude:q':'B'}, state), [])
 
     def test_attention_target_validation_and_legacy_default(self):
@@ -175,7 +181,7 @@ class VirtualClawdyTests(unittest.TestCase):
         self.assertEqual(core.snapshot('fixture',1,demo_view,True)['confidence'],'demo')
 
     def test_demo_timeline_is_deterministic_and_explicit(self):
-        expected=[(0,'idle',0),(4,'working',1),(10,'working',2),(17,'attention',1),
+        expected=[(0,'idle',0),(4,'working',1),(10,'working',2),(17,'working',1),
                   (23,'error',1),(29,'working',1),(35,'ready',0),(42,'idle',0)]
         for moment,state,count in expected:
             with self.subTest(moment=moment):
@@ -270,23 +276,23 @@ class VirtualClawdyTests(unittest.TestCase):
         self.assertTrue(json.loads(process.stdout)['demo'])
         self.assertEqual(process.stderr,'')
 
-    def test_exhaustive_provider_combinations_preserve_legacy_priority(self):
+    def test_exhaustive_provider_combinations_follow_priority(self):
         providers=core.PROVIDERS
         for flags in itertools.product('BRYGO',repeat=len(providers)):
             sessions={provider+':private':flag for provider,flag in zip(providers,flags)}
             expected=next((state for flag,state in (
-                ('B','attention'),('R','error'),('Y','working'),('G','ready')) if flag in flags),'idle')
+                ('R','error'),('Y','working'),('B','attention'),('G','ready')) if flag in flags),'idle')
             state,count,summary=core.resolve_sessions(sessions)
             self.assertEqual((state,count),(expected,flags.count('Y')))
             self.assertEqual(summary,[provider for provider,flag in zip(providers,flags) if flag=='Y'])
 
     def test_only_working_provider_icons_remain_until_last_working_session_finishes(self):
         sessions={'codex:one':'Y','codex:two':'Y','claude:ready':'G','gemini:input':'B','cursor:error':'R'}
-        self.assertEqual(core.resolve_sessions(sessions),('attention',2,['codex']))
+        self.assertEqual(core.resolve_sessions(sessions),('error',2,['codex']))
         sessions['codex:one']='G'
-        self.assertEqual(core.resolve_sessions(sessions),('attention',1,['codex']))
+        self.assertEqual(core.resolve_sessions(sessions),('error',1,['codex']))
         sessions['codex:two']='G'
-        self.assertEqual(core.resolve_sessions(sessions),('attention',0,[]))
+        self.assertEqual(core.resolve_sessions(sessions),('error',0,[]))
         self.assertEqual(core.resolve_sessions({'unknown:working':'Y'}),('working',1,['other']))
 
     def test_registry_limit_and_overload_cannot_manufacture_ready(self):

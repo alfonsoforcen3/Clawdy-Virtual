@@ -4,7 +4,7 @@ namespace Clawdy.Windows.Core;
 public sealed record AttentionChat(string Provider, string ThreadId);
 public sealed record StatusSnapshot(
     string State, int WorkingCount, string[] Providers, bool Demo, string Phrase,
-    string Confidence, string[] AttentionProviders, AttentionChat[] AttentionChats)
+    string Confidence, string[] AttentionProviders, AttentionChat[] AttentionChats, bool QuestionPending = false)
 {
     public static StatusSnapshot Offline(string phrase = "Waiting for local status") =>
         new("disconnected", 0, [], false, phrase, "unknown", [], []);

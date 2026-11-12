@@ -83,6 +83,8 @@ public sealed class AttentionPolicy
     // transport changes never create another red episode on their own.
     public bool Update(StatusSnapshot value, DateTimeOffset now)
     {
+        if (value.QuestionPending)
+            value = value with { State = "attention", Phrase = "A little help, please.", QuestionPending = false };
         // A mode switch must never carry a retained live action into Demo.
         if (_latest.Demo != value.Demo)
         {
@@ -196,6 +198,14 @@ public sealed class AttentionPolicy
         var first = new AttentionChat("codex", "11111111-2222-4333-8444-555555555555");
         var red = new StatusSnapshot("attention", 3, ["claude"], false, "fixture", "reported", ["codex"], [first]);
         var ready = new StatusSnapshot("ready", 0, [], false, "fixture", "reported", [], []);
+        var concurrent = new AttentionPolicy(exactChatActions: true);
+        var workingQuestion = red with { State = "working", QuestionPending = true };
+        Check(concurrent.Update(workingQuestion, now) && concurrent.Visible
+              && concurrent.Displayed.State == "attention" && concurrent.Actions[0].Kind == "chat",
+              "question opens during unrelated work");
+        concurrent.Update(workingQuestion with { State = "error" }, now.AddMinutes(1));
+        Check(concurrent.Visible && concurrent.Displayed.State == "attention",
+              "question stays open when an error takes priority");
         var policy = new AttentionPolicy(exactChatActions: true);
         Check(policy.Update(red, now), "red requests automatic expansion");
         var version = policy.ActionVersion;

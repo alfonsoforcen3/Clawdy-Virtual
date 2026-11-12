@@ -102,8 +102,10 @@ during sleep. These fixtures do not restart ChatGPT or prove every OS sleep path
 
 A short hover opens the anchored glass status panel. Move into it to use its
 controls; a brief exit delay prevents it closing across the gap. Questions or
-errors expand it once per episode. Close/outside-click dismiss it; choosing
-**Show status details** in the menu gives keyboard access and Escape. Passive
+errors expand it once per episode. The indicator prioritizes errors, work,
+questions, ready, then idle. A question opens its own card and stays visible
+until you use its action or close it. **Show status details** in the menu gives
+keyboard access and Escape. Passive
 hover/automatic expansion never steals keyboard focus. Reduce Motion and Pause
 remove the expansion animation. There is no cursor polling loop.
 

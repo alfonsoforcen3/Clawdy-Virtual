@@ -8,6 +8,10 @@ var bytes = Encoding.UTF8.GetBytes(fixture);
 var decoded = WireProtocol.Decode(bytes, false);
 Check(decoded.Snapshot.WorkingCount == 2 && decoded.Snapshot.Providers.Length == 2, "shared protocol count/apps");
 Check(decoded.Snapshot.Confidence == "reported", "no invented freshness");
+var mixedFixture = fixture.Replace("\"attention_providers\":[]", "\"attention_providers\":[\"codex\"],\"question_pending\":true");
+var mixed = WireProtocol.Decode(Encoding.UTF8.GetBytes(mixedFixture), false).Snapshot;
+Check(mixed.State == "working" && mixed.QuestionPending && mixed.AttentionProviders.SequenceEqual(["codex"]),
+    "working aggregate preserves pending question metadata");
 foreach (var bad in new[]
 {
     fixture.Replace("\"revision\":1", "\"revision\":true"), fixture.Replace("\"version\":1", "\"version\":1,\"version\":1"),

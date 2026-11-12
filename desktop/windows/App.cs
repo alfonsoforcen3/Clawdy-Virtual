@@ -225,7 +225,7 @@ internal sealed class TrayHost : IAsyncDisposable
     }
     private static bool SamePresentation(StatusSnapshot a, StatusSnapshot b) =>
         a.State == b.State && a.WorkingCount == b.WorkingCount && a.Demo == b.Demo && a.Phrase == b.Phrase
-        && a.Confidence == b.Confidence && a.Providers.SequenceEqual(b.Providers)
+        && a.QuestionPending == b.QuestionPending && a.Confidence == b.Confidence && a.Providers.SequenceEqual(b.Providers)
         && a.AttentionProviders.SequenceEqual(b.AttentionProviders) && a.AttentionChats.SequenceEqual(b.AttentionChats);
     private void SystemPreferenceChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
     {

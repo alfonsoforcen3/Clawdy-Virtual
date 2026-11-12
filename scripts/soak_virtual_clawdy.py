@@ -44,7 +44,7 @@ def checked_record(raw, previous_instance=None, previous_revision=0):
     """Strict demo allowlist; backend text can never enter the report."""
     if len(raw)>MAX_LINE or not raw.endswith(b'\n'): raise ValueError('invalid frame')
     record=json.loads(raw.decode('utf-8'),object_pairs_hook=_pairs)
-    if not isinstance(record,dict) or set(record)!=FIELDS: raise ValueError('invalid fields')
+    if not isinstance(record,dict) or set(record)-{'question_pending'}!=FIELDS: raise ValueError('invalid fields')
     instance=record['instance_id']
     if (type(record['version']) is not int or record['version']!=1 or record['demo'] is not True
             or not isinstance(instance,str) or len(instance)!=32
@@ -53,7 +53,7 @@ def checked_record(raw, previous_instance=None, previous_revision=0):
             or type(record['revision']) is not int or record['revision']!=previous_revision+1):
         raise ValueError('invalid identity or revision')
     expected=status_core.snapshot(instance,record['revision'],{
-        key:record[key] for key in ('state','working_count','providers','phrase','confidence','attention_providers')},True)
+        key:record[key] for key in ('state','working_count','providers','phrase','confidence','attention_providers','question_pending') if key in record},True)
     if record!=expected or not record['phrase'].startswith('Demo: '): raise ValueError('invalid demo')
     return record
 

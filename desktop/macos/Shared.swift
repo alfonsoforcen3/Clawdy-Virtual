@@ -27,13 +27,14 @@ struct ClawdySnapshot: Codable, Equatable {
     var demo: Bool
     var phrase: String
     var confidence: ClawdyConfidence? = nil
+    var question_pending: Bool? = nil
     var attention_providers: [String]? = nil
     var attention_chats: [ClawdyAttentionChat]? = nil
 
     var effectiveConfidence: ClawdyConfidence { confidence ?? (demo ? .demo : .unknown) }
 
     private enum CodingKeys: String, CodingKey {
-        case version, instance_id, revision, state, working_count, providers, demo, phrase, confidence, attention_providers, attention_chats
+        case version, instance_id, revision, state, working_count, providers, demo, phrase, confidence, attention_providers, attention_chats, question_pending
     }
 
     static let allowedProviders: Set<String> = ["claude", "codex", "gemini", "cursor", "other", "unknown"]
@@ -46,11 +47,12 @@ struct ClawdySnapshot: Codable, Equatable {
               (attention_providers ?? []).count <= 8,
               Set(attention_providers ?? []).count == (attention_providers ?? []).count,
               (attention_providers ?? []).allSatisfy({ Self.allowedProviders.contains($0) }),
-              (attention_providers ?? []).isEmpty || state == .attention || state == .error,
+              question_pending != true || ((state == .working || state == .error) && !(attention_providers ?? []).isEmpty),
+              (attention_providers ?? []).isEmpty || state == .attention || state == .error || question_pending == true,
               (attention_chats ?? []).count <= 3,
               (attention_chats ?? []).allSatisfy({ $0.isValid }),
               Set((attention_chats ?? []).map(\.thread_id)).count == (attention_chats ?? []).count,
-              (attention_chats ?? []).isEmpty || (!demo && (state == .attention || state == .error)
+              (attention_chats ?? []).isEmpty || (!demo
                   && (attention_providers ?? []).contains("codex")),
               phrase.utf8.count <= 256,
               !phrase.unicodeScalars.contains(where: { $0.value < 32 || $0.value == 127 }),
@@ -85,6 +87,7 @@ extension ClawdySnapshot {
         // Old v1 snapshots can omit confidence; explicit null/unknown values
         // are malformed. No reported record establishes provider liveness.
         confidence = values.contains(.confidence) ? try values.decode(ClawdyConfidence.self, forKey: .confidence) : nil
+        question_pending = values.contains(.question_pending) ? try values.decode(Bool.self, forKey: .question_pending) : nil
         attention_providers = values.contains(.attention_providers) ? try values.decode([String].self, forKey: .attention_providers) : nil
         attention_chats = values.contains(.attention_chats) ? try values.decode([ClawdyAttentionChat].self, forKey: .attention_chats) : nil
     }

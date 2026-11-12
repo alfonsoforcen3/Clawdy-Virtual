@@ -52,7 +52,7 @@ class LocalChatResolver:
         return valid
 
     def attention_chats(self, status, view):
-        flag = {'attention': 'B', 'error': 'R'}.get(view['state'])
+        flag = 'B' if view.get('question_pending') else {'attention': 'B', 'error': 'R'}.get(view['state'])
         if flag is None:
             return []
         sessions = status.get('active_sessions', {})

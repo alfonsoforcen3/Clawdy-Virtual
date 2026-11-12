@@ -30,7 +30,7 @@ LAST_REPORTED = {
     'attention': 'Last reported needing input; freshness unconfirmed.',
     'error': 'Last reported error; freshness unconfirmed.',
 }
-PRIORITY = (('B', 'attention'), ('R', 'error'), ('Y', 'working'), ('G', 'ready'))
+PRIORITY = (('R', 'error'), ('Y', 'working'), ('B', 'attention'), ('G', 'ready'))
 
 
 def resolve_sessions(sessions):
@@ -61,7 +61,7 @@ def resolve_sessions(sessions):
 
 def attention_providers(sessions, state):
     """Provider enums needing action, never unrelated working sessions or IDs."""
-    flag = {'attention': 'B', 'error': 'R'}.get(state)
+    flag = 'B' if state in ('attention', 'working', 'error') and 'B' in sessions.values() else {'error': 'R'}.get(state)
     if flag is None:
         return []
     names = {key.partition(':')[0] if ':' in key else 'other'
@@ -90,7 +90,11 @@ def observed_view(status):
         if status.get('aggregate') not in ('B', 'R', 'Y', 'G', 'O'):
             raise ValueError('Invalid aggregate')
         expected = {'attention':'B', 'error':'R', 'working':'Y', 'ready':'G'}
-        if not ignored_fallback and logical != 'idle' and status['aggregate'] != expected[logical]:
+        # Older physical bridges reported B first. Recompute from the registry
+        # when that older aggregate is consistent with an actual question.
+        legacy_question = status['aggregate'] == 'B' and 'B' in identified.values()
+        if (not ignored_fallback and logical != 'idle'
+                and status['aggregate'] != expected[logical] and not legacy_question):
             return {'state':'uncertain', 'working_count':count, 'providers':providers,
                     'phrase':PHRASES['uncertain'], 'confidence':'unknown'}
         if logical == 'idle':
@@ -99,7 +103,8 @@ def observed_view(status):
         return {'state':logical, 'working_count':count, 'providers':providers,
                 'phrase':LAST_REPORTED[logical], 'confidence':'reported',
                 **({'attention_providers': attention_providers(identified, logical)}
-                   if logical in ('attention', 'error') else {})}
+                   if logical in ('attention', 'working', 'error') else {}),
+                **({'question_pending': True} if logical in ('working', 'error') and 'B' in identified.values() else {})}
     except (TypeError, ValueError):
         return {'state':'uncertain', 'working_count':0, 'providers':[],
                 'phrase':PHRASES['uncertain'], 'confidence':'unknown'}
@@ -135,7 +140,8 @@ def demo_view(elapsed):
     return {'state':state, 'working_count':count, 'providers':providers,
             'phrase':'Demo: ' + PHRASES[state], 'confidence':'demo',
             **({'attention_providers': attention_providers(registry, state)}
-               if state in ('attention', 'error') else {})}
+               if state in ('attention', 'working', 'error') else {}),
+            **({'question_pending': True} if state in ('working', 'error') and 'B' in registry.values() else {})}
 
 
 def snapshot(instance_id, revision, view, demo):
@@ -154,14 +160,18 @@ def snapshot(instance_id, revision, view, demo):
     providers = view['providers']
     if not isinstance(providers, list) or any(p not in PROVIDERS for p in providers) or len(set(providers)) != len(providers):
         raise ValueError('Invalid provider summary')
+    question = view.get('question_pending', False)
+    if type(question) is not bool or (question and state not in ('working', 'error')):
+        raise ValueError('Invalid pending question')
     actions = view.get('attention_providers', [])
     if (not isinstance(actions, list) or any(p not in PROVIDERS for p in actions)
             or len(set(actions)) != len(actions)
-            or (actions and state not in ('attention', 'error'))):
+            or (question and not actions)
+            or (actions and not question and state not in ('attention', 'error'))):
         raise ValueError('Invalid attention providers')
     chats = view.get('attention_chats', [])
     if (not isinstance(chats, list) or len(chats) > 3
-            or (chats and (demo or state not in ('attention', 'error') or 'codex' not in actions))):
+            or (chats and (demo or 'codex' not in actions))):
         raise ValueError('Invalid chat routes')
     seen_chats = set()
     for chat in chats:
@@ -177,4 +187,5 @@ def snapshot(instance_id, revision, view, demo):
     return {'version':1, 'instance_id':instance_id, 'revision':revision, 'state':state,
             'working_count':view['working_count'], 'providers':list(providers), 'demo':demo,
             'phrase':phrase, 'confidence':confidence, 'attention_providers':list(actions),
+            **({'question_pending': True} if question else {}),
             **({'attention_chats': [dict(chat) for chat in chats]} if chats else {})}

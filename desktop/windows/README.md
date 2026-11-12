@@ -103,7 +103,9 @@ as the source build and respects Windows and workplace software policies.
 - Hover previews a compact anchored card, with delayed entry/exit. Left click
   opens it; keyboard selection offers keyboard focus. Right click exposes OBS,
   demo, Reduce Motion, Retry and Quit. Passive presentation requests no activation.
-- Input/error episodes request a single expansion with retention/dismissal policy.
+- The indicator prioritizes errors, work, questions, ready, then idle. A question
+  opens its card even during work or an error. It stays open until you use its
+  action or close it.
   Monitor work-area/DPI conversion and Explorer `TaskbarCreated` recovery are
   implemented, awaiting actual mixed-DPI/taskbar/restart acceptance. Every automatic
   expansion goes through the host's active-session/notification-state gate, including

@@ -318,7 +318,13 @@ final class ClawdyAttentionController: NSObject {
         surface.setAccessibilityLabel("Clawdy status details")
     }
 
-    func update(snapshot: ClawdySnapshot, preferences: ClawdyPreferences) {
+    func update(snapshot aggregate: ClawdySnapshot, preferences: ClawdyPreferences) {
+        var snapshot = aggregate
+        if snapshot.question_pending == true {
+            snapshot.state = .attention
+            snapshot.phrase = "A little help, please."
+            snapshot.question_pending = nil
+        }
         latestSnapshot = snapshot
         reducedMotion = preferences.reducedMotion || preferences.paused
         let red = snapshot.state == .attention || snapshot.state == .error

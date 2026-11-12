@@ -12,7 +12,7 @@ public static partial class WireProtocol
     public const int MaximumFrameBytes = 65_536;
     private static readonly HashSet<string> States = ["idle", "working", "ready", "attention", "error", "disconnected", "uncertain"];
     private static readonly HashSet<string> Providers = ["codex", "claude", "gemini", "cursor", "other"];
-    private static readonly HashSet<string> Fields = ["version", "instance_id", "revision", "state", "working_count", "providers", "demo", "phrase", "confidence", "attention_providers", "attention_chats"];
+    private static readonly HashSet<string> Fields = ["version", "instance_id", "revision", "state", "working_count", "providers", "demo", "phrase", "confidence", "attention_providers", "attention_chats", "question_pending"];
     [GeneratedRegex("^[0-9a-f]{32}$", RegexOptions.CultureInvariant)]
     private static partial Regex InstancePattern();
     [GeneratedRegex("^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$", RegexOptions.CultureInvariant)]
@@ -39,6 +39,7 @@ public static partial class WireProtocol
             || confidence is not ("demo" or "reported" or "unknown") || (confidence == "demo") != demo)
             throw new FormatException("snapshot-values");
         var actions = root.TryGetProperty("attention_providers", out var a) ? ProviderList(a) : [];
+        var question = root.TryGetProperty("question_pending", out var q) && q.GetBoolean();
         var chats = new List<AttentionChat>();
         if (root.TryGetProperty("attention_chats", out var routes))
         {
@@ -53,10 +54,11 @@ public static partial class WireProtocol
                 chats.Add(new AttentionChat(provider, id));
             }
         }
-        if ((actions.Length > 0 && state is not ("attention" or "error"))
-            || (chats.Count > 0 && (demo || state is not ("attention" or "error") || !actions.Contains("codex"))))
+        if ((question && (actions.Length == 0 || state is not ("working" or "error")))
+            || (!question && actions.Length > 0 && state is not ("attention" or "error"))
+            || (chats.Count > 0 && (demo || !actions.Contains("codex"))))
             throw new FormatException("action-state");
-        return new(instance, revision, new(state, count, providers, demo, phrase, confidence, actions, chats.ToArray()));
+        return new(instance, revision, new(state, count, providers, demo, phrase, confidence, actions, chats.ToArray(), question));
     }
 
     private static void RequireObject(JsonElement value, HashSet<string> allowed)

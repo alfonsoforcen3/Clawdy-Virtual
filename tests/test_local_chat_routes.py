@@ -31,6 +31,9 @@ class LocalChatRouteTests(unittest.TestCase):
         self.assertEqual(self.resolver.attention_chats(status, view), [{'provider': 'codex', 'thread_id': ID}])
         self.assertEqual(self.resolver.attention_chats(status, {'state': 'error'}), [])
         self.assertEqual(self.resolver.attention_chats(status, {'state': 'working'}), [])
+        for state in ('working', 'error'):
+            self.assertEqual(self.resolver.attention_chats(status, {'state': state, 'question_pending': True}),
+                             [{'provider': 'codex', 'thread_id': ID}])
 
     def test_missing_remote_cli_subagent_and_mismatched_ids_are_not_routes(self):
         self.assertFalse(self.resolver.verified(ID))
