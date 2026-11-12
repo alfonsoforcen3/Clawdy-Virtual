@@ -23,10 +23,14 @@ def windows_provider_evidence(provider):
     roaming = os.environ.get('APPDATA')
     program_files = os.environ.get('ProgramFiles')
     candidates = []
-    if provider == 'codex' and local:
-        root = Path(local)
-        candidates.extend((root / 'Packages').glob('OpenAI.Codex_*'))
-        candidates.append(root / 'Microsoft/WindowsApps/chatgpt-desktop.exe')
+    if provider == 'codex':
+        if local:
+            root = Path(local)
+            candidates.extend((root / 'Packages').glob('OpenAI.Codex_*'))
+            candidates.extend(root / path for path in
+                              ('Microsoft/WindowsApps/chatgpt-desktop.exe', 'Programs/Codex/Codex.exe'))
+        if program_files:
+            candidates.append(Path(program_files) / 'Codex/Codex.exe')
     if provider == 'claude':
         candidates.append(home / '.local/bin/claude.exe')
     if provider in ('claude', 'gemini') and roaming:
