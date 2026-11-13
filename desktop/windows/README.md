@@ -76,8 +76,8 @@ Look for Clawdy in the notification area and the floating desktop companion widg
 
 Only one prototype instance per logged-in Windows session is admitted. If it is
 already open, use its tray menu to switch OBS/demo or quit. OBS can legitimately
-show disconnected on a machine without the separately installed physical bridge.
-Do not install that companion just to obtain a demo.
+show disconnected until a [local status service](../../docs/LOCAL_STATUS.md)
+is running. You can install it for live status without any hardware.
 
 ## Update Clawdy
 

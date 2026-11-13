@@ -28,7 +28,7 @@ open "$HOME/Library/Caches/ClawdyPrototype/SourcePreview/VirtualClawdy.app" --ar
 ```
 
 Look for the traffic lights in the menu bar. Hover or click to see the card.
-Live observation requires an existing [local status service](LOCAL_STATUS.md).
+For live observation, set up the [local status service and app hooks](LOCAL_STATUS.md).
 The [native app guide](../desktop/macos/README.md) explains the optional overlay,
 attention behavior and verification commands.
 

@@ -1,6 +1,6 @@
 # Scope of the license
 
-The MIT license covers the original Virtual Clawdy software in this repository.
+The MIT license covers the original Clawdy host software in this repository.
 The Clawdy names, logos and product artwork are reserved. The bundled
 `desktop/macos/Assets/ClawdyProduct.png` is provided for use within Virtual
 Clawdy, including its normal build and distribution, and remains outside the

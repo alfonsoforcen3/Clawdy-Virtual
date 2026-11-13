@@ -11,12 +11,26 @@
 <p align="center">
   <a href="https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience"><strong>Try the browser demo</strong></a> ·
   <a href="docs/TRY_VIRTUAL_CLAWDY.md">Build for Mac</a> ·
-  <a href="desktop/windows/README.md">Build for Windows</a>
+  <a href="desktop/windows/README.md">Build for Windows</a> ·
+  <a href="docs/CUSTOMER_SETUP.md"><strong>Set up a physical Clawdy</strong></a>
 </p>
 
 You leave an AI coding agent running. An hour later, you discover it stopped five
 minutes in to ask a question. Clawdy gives you a small traffic light you can
 check at a glance, right in your Mac menu bar or Windows notification area.
+
+### Set up Clawdy with your AI
+
+Copy this single prompt into a local coding agent that can run commands on
+your computer. Keep the option that applies to you.
+
+> Clone https://github.com/alfonsoforcen3/Clawdy-Virtual and follow its setup instructions. I want to [set up the physical Clawdy I bought / install Virtual Clawdy].
+
+Both options use the same local status service and the AI hooks you approve.
+Choose physical to connect your toy over Bluetooth, or virtual to install the
+desktop app. The app can also show live status while your toy is connected.
+
+[Physical setup guide](docs/CUSTOMER_SETUP.md) · [Live desktop status and hooks](docs/LOCAL_STATUS.md)
 
 ### Watch Clawdy in action
 
@@ -54,8 +68,8 @@ then apply the update on the next normal launch. You can also restart Clawdy
 from the update menu as soon as it is ready. Older previews need a one-time
 rebuild to get these controls.
 
-Live activity requires an existing compatible local status service. The
-[local status guide](docs/LOCAL_STATUS.md) explains how to connect one. Windows
+Install the [local status service and hooks](docs/LOCAL_STATUS.md) to see live
+activity from your selected AI apps, with or without a toy. Windows
 is a source preview with automated build and fixture coverage. Hands-on Windows
 tray testing is still pending.
 
@@ -69,4 +83,4 @@ They bring the same traffic lights to your desk, and Pro Max adds a status displ
 
 Building with an AI coding agent? [Open an issue](https://github.com/alfonsoforcen3/Clawdy-Virtual/issues/new) and tell us when a signal helped or got in your way.
 
-[MIT license for the virtual software](LICENSE) · [Artwork and branding terms](NOTICE.md)
+[MIT license for the host software](LICENSE) · [Artwork and branding terms](NOTICE.md)
