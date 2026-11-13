@@ -59,14 +59,14 @@ def backup_file(filepath):
     return backup_path
 
 def enable_hooks():
-    print("🚦 Enabling Traffic Light Hooks...")
+    print("Enabling Traffic Light Hooks...")
     os.makedirs(CONFIG_DIR, exist_ok=True)
 
     data = {}
     if os.path.exists(HOOKS_FILE):
         bak = backup_file(HOOKS_FILE)
         if bak:
-            print(f"📦 Created backup of existing config: {bak}")
+            print(f"Created backup of existing config: {bak}")
         try:
             with open(HOOKS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -78,22 +78,22 @@ def enable_hooks():
     with open(HOOKS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-    print(f"✅ Hooks successfully written to: {HOOKS_FILE}")
-    print("🚦 Sending Green (Ready) signal to Arduino...")
+    print(f"Hooks successfully written to: {HOOKS_FILE}")
+    print("Sending Green (Ready) signal to Arduino...")
     subprocess.run([sys.executable, TRAFFIC_SCRIPT, "G"])
-    print("\n🎉 Done! The traffic light will now automatically track your sessions.")
-    print("👉 To revert/disable at any time, simply run: python3 manage_hooks.py disable")
+    print("\nDone! The traffic light will now automatically track your sessions.")
+    print("To revert/disable at any time, simply run: python3 manage_hooks.py disable")
 
 def disable_hooks():
     subprocess.run([sys.executable, os.path.join(SCRIPTS_DIR, "codex_setup.py"), "disable"], check=True)
-    print("🛑 Disabling / Reverting Traffic Light Hooks...")
+    print("Disabling / Reverting Traffic Light Hooks...")
     if not os.path.exists(HOOKS_FILE):
-        print(f"ℹ️  No {HOOKS_FILE} found. Hooks are already not active.")
+        print(f"No {HOOKS_FILE} found. Hooks are already not active.")
         return
 
     bak = backup_file(HOOKS_FILE)
     if bak:
-        print(f"📦 Backup saved before reverting: {bak}")
+        print(f"Backup saved before reverting: {bak}")
 
     try:
         with open(HOOKS_FILE, "r", encoding="utf-8") as f:
@@ -105,25 +105,25 @@ def disable_hooks():
     if not isinstance(data, dict) or "traffic-light" not in data:
         return
     del data["traffic-light"]
-    print("🗑️  Removed 'traffic-light' hook from configuration.")
+    print("Removed 'traffic-light' hook from configuration.")
 
     # If data is now empty, we can remove the file entirely or write empty dict
     if not data:
         os.remove(HOOKS_FILE)
-        print(f"🧹 {HOOKS_FILE} is now empty and was safely removed.")
+        print(f"{HOOKS_FILE} is now empty and was safely removed.")
     else:
         with open(HOOKS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-        print(f"✅ Other custom hooks were preserved in {HOOKS_FILE}.")
+        print(f"Other custom hooks were preserved in {HOOKS_FILE}.")
 
     # Turn off the traffic light
     if sys.platform != "win32":
         subprocess.run([sys.executable, TRAFFIC_SCRIPT, "O"])
-    print("⚫ Sent OFF signal to Arduino.")
-    print("\n✅ Successfully reverted! No active traffic light hooks remain.")
+    print("Sent OFF signal to Arduino.")
+    print("\nSuccessfully reverted! No active traffic light hooks remain.")
 
 def check_status():
-    print("🔍 --- TRAFFIC LIGHT HOOK STATUS ---")
+    print("--- TRAFFIC LIGHT HOOK STATUS ---")
     codex_hooks = os.path.expanduser('~/.codex/hooks.json')
     if os.path.exists(codex_hooks):
         with open(codex_hooks, encoding='utf-8') as f:
@@ -164,11 +164,11 @@ def check_status():
             if "traffic-light" in data and data["traffic-light"].get("enabled", True):
                 print(f"Legacy Gemini/Antigravity config present in {HOOKS_FILE}; not proof of current Gemini CLI integration.")
             else:
-                print(f"🟡 Hook Status: Config file exists, but 'traffic-light' is disabled/missing.")
+                print(f"Hook Status: Config file exists, but 'traffic-light' is disabled/missing.")
         except Exception as e:
-            print(f"⚠️  Hook Status: Error reading {HOOKS_FILE}: {e}")
+            print(f"Warning:  Hook Status: Error reading {HOOKS_FILE}: {e}")
     else:
-        print(f"⚪ Hook Status: INACTIVE (No {HOOKS_FILE})")
+        print(f"Hook Status: INACTIVE (No {HOOKS_FILE})")
 
     # 2. Bridge process (query TCP socket directly for multi-session status)
     bridge_running = False
@@ -188,17 +188,17 @@ def check_status():
 
     if bridge_running:
         transport = bridge_data.get('transport', 'serial') if bridge_data else 'serial'
-        print(f"🟢 Bridge: RUNNING ({transport}, multi-session priority enabled)")
+        print(f"Bridge: RUNNING ({transport}, multi-session priority enabled)")
         if bridge_data:
             agg = bridge_data.get("aggregate", "G")
             state_desc = {
-                "G": "🟢 Solid Green (All Clear / Ready)",
-                "Y": "🟡 Solid Yellow (Working / Thinking)",
-                "B": "🚨 Blinking Red (User Input Required)",
-                "R": "🔴 Solid Red (Error)",
-                "O": "⚫ Off"
+                "G": "Solid Green (All Clear / Ready)",
+                "Y": "Solid Yellow (Working / Thinking)",
+                "B": "Blinking Red (User Input Required)",
+                "R": "Solid Red (Error)",
+                "O": "Off"
             }.get(agg, agg)
-            print(f"🚦 Activity: {state_desc}")
+            print(f"Activity: {state_desc}")
             if transport == 'local':
                 print('Local-only mode. No physical Clawdy is configured.')
                 return
@@ -210,14 +210,14 @@ def check_status():
                 print('Board GPIO report: ' + json.dumps(bridge_data['firmware_report']))
             sessions = bridge_data.get("active_sessions", {})
             if sessions:
-                print(f"📋 Active Sessions Tracked ({len(sessions)}):")
+                print(f"Active Sessions Tracked ({len(sessions)}):")
                 for sid, s in sessions.items():
-                    state_name = {"Y": "🟡 Working", "G": "🟢 Ready", "B": "🚨 Needs Input", "R": "🔴 Error"}.get(s, s)
-                    print(f"   • {sid[:24]}: {state_name}")
+                    state_name = {"Y": "Working", "G": "Ready", "B": "Needs Input", "R": "Error"}.get(s, s)
+                    print(f"   - {sid[:24]}: {state_name}")
             else:
-                print("📋 Active Sessions: 0 (Idle Standby)")
+                print("Active Sessions: 0 (Idle Standby)")
     else:
-        print("🟡 Clawdy status service: stopped or unreachable")
+        print("Clawdy status service: stopped or unreachable")
 
     if not bridge_running or transport != 'serial':
         return
@@ -228,22 +228,22 @@ def check_status():
         ports = list(serial.tools.list_ports.comports())
         devs = [p.device for p in ports if p.device.upper().startswith("COM") or "usb" in p.device.lower()]
         if devs:
-            print(f"🔌 Hardware Port: Connected ({', '.join(devs)})")
+            print(f"Hardware Port: Connected ({', '.join(devs)})")
         else:
-            print("❌ Hardware Port: No Arduino USB device detected.")
+            print("Hardware Port: No Arduino USB device detected.")
     except Exception:
-        print("⚠️  Hardware Port: Could not enumerate serial ports.")
+        print("Warning:  Hardware Port: Could not enumerate serial ports.")
 
 def run_test():
-    print("🚦 Running light test cycle...")
-    for color, name in [("R", "🔴 Red"), ("Y", "🟡 Yellow"), ("G", "🟢 Green"), ("O", "⚫ Off")]:
+    print("Running light test cycle...")
+    for color, name in [("R", "Red"), ("Y", "Yellow"), ("G", "Green"), ("O", "Off")]:
         print(f"Switching to {name}...")
         subprocess.run([sys.executable, TRAFFIC_SCRIPT, color])
         time.sleep(1)
-    print("✅ Test cycle complete!")
+    print("Test cycle complete!")
 
 def reset_sessions():
-    print("🔄 Resetting all tracked sessions to Standby (Green)...")
+    print("Resetting all tracked sessions to Standby (Green)...")
     try:
         import socket
         test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -252,10 +252,10 @@ def reset_sessions():
         test_sock.sendall(b'{"action": "reset"}\n')
         test_sock.recv(1024)
         test_sock.close()
-        print("✅ Session registry cleared and light reset to Green.")
+        print("Session registry cleared and light reset to Green.")
     except Exception:
         subprocess.run([sys.executable, TRAFFIC_SCRIPT, "G"])
-        print("🟢 Sent Green signal directly.")
+        print("Sent Green signal directly.")
 
 def main():
     if len(sys.argv) < 2:

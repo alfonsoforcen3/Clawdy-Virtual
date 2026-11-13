@@ -21,10 +21,14 @@ check at a glance, right in your Mac menu bar or Windows notification area.
 
 ### Set up Clawdy with your AI
 
-Paste one line into a local coding agent that can run commands on your computer:
+Copy this single prompt into a local coding agent that can run commands on
+your computer. Keep the option that applies to you.
 
-- **I have a toy:** “I bought a new Clawdy. Make it work. Clone https://github.com/alfonsoforcen3/Clawdy-Virtual and follow its setup instructions.”
-- **I want the free desktop app:** “Install Virtual Clawdy from https://github.com/alfonsoforcen3/Clawdy-Virtual.”
+> Clone https://github.com/alfonsoforcen3/Clawdy-Virtual and follow its setup instructions. I want to [set up the physical Clawdy I bought / install Virtual Clawdy].
+
+Both options use the same local status service and the AI hooks you approve.
+Choose physical to connect your toy over Bluetooth, or virtual to install the
+desktop app. The app can also show live status while your toy is connected.
 
 [Physical setup guide](docs/CUSTOMER_SETUP.md) · [Live desktop status and hooks](docs/LOCAL_STATUS.md)
 

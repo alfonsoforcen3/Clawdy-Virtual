@@ -14,6 +14,8 @@ installation request.
   desktop preview. Offer a demo first or, with approval, set up
   [live local status](docs/LOCAL_STATUS.md) and hooks for the apps they choose.
   The virtual-only path needs no Bluetooth or hardware.
+- **“I want both.”** Set up the physical device and selected hooks once, then
+  build Virtual Clawdy and use Observe mode with that same local service.
 - **Unclear which one?** Ask whether they have a powered physical Clawdy
   or want the desktop app only.
 

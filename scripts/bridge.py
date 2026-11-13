@@ -9,11 +9,11 @@ Features:
 - True Plug & Go: Handles unplugs, replugs, and moving across USB ports seamlessly.
 - Thread-Safe Communication: Decouples USB serial management from TCP hook requests.
 - Multi-Session Priority Resolution:
-  1. 🚨 Blinking Red ('B'): If ANY session needs user input/permission
-  2. 🔴 Solid Red ('R'):    If ANY session encountered an error
-  3. 🟡 Solid Yellow ('Y'): If ANY session is currently working/thinking
-  4. 🟢 Solid Green ('G'):  When ALL active sessions are finished/ready
-  5. ⚫ Off ('O'):          When all sessions have ended
+  1. Blinking Red ('B'): If ANY session needs user input/permission
+  2. Solid Red ('R'):    If ANY session encountered an error
+  3. Solid Yellow ('Y'): If ANY session is currently working/thinking
+  4. Solid Green ('G'):  When ALL active sessions are finished/ready
+  5. Off ('O'):          When all sessions have ended
 - Abandoned sessions expire after 24 hours; long running turns stay yellow.
 """
 
@@ -116,7 +116,7 @@ def hardware_watchdog(on_report=None):
                     port_alive = False
 
                 if not port_alive:
-                    print(f"⚠️ Arduino was unplugged from {ser_conn.port}.", flush=True)
+                    print(f"Warning: Arduino was unplugged from {ser_conn.port}.", flush=True)
                     try:
                         ser_conn.close()
                     except Exception:
@@ -146,7 +146,7 @@ def hardware_watchdog(on_report=None):
                                 except (ValueError, AttributeError):
                                     pass
                             if b"TRAFFIC_LIGHT_READY" in incoming:
-                                print(f"🔄 Arduino reboot detected! Re-syncing state [{current_hardware_state}]...", flush=True)
+                                print(f"Arduino reboot detected! Re-syncing state [{current_hardware_state}]...", flush=True)
                                 ser_conn.write(current_hardware_state.encode("utf-8"))
                                 ser_conn.flush()
                         now = time.time()
@@ -155,7 +155,7 @@ def hardware_watchdog(on_report=None):
                             ser_conn.flush()
                             last_sync_time = now
                     except Exception as e:
-                        print(f"⚠️ Connection dropped ({e}). Watchdog will reconnect.", flush=True)
+                        print(f"Warning: Connection dropped ({e}). Watchdog will reconnect.", flush=True)
                         try:
                             ser_conn.close()
                         except Exception:
@@ -170,7 +170,7 @@ def hardware_watchdog(on_report=None):
             if ser_conn is None:
                 port = find_serial_port()
                 if port:
-                    print(f"🔌 Detected Arduino on {port}! Connecting...", flush=True)
+                    print(f"Detected Arduino on {port}! Connecting...", flush=True)
                     try:
                         ser = serial.Serial(port, BAUD_RATE, timeout=0.05)
                         # Bootloader delay
@@ -184,7 +184,7 @@ def hardware_watchdog(on_report=None):
                         incoming_buffer = b''
                         hardware_synced = True
                         last_sync_time = time.time()
-                        print(f"✅ Plug & Go Ready: Connected to {port} and synced state [{current_hardware_state}]!", flush=True)
+                        print(f"Plug & Go Ready: Connected to {port} and synced state [{current_hardware_state}]!", flush=True)
                     except Exception as e:
                         ser_conn = None
                         hardware_synced = False
@@ -207,7 +207,7 @@ def write_to_hardware(state_char):
                 hardware_synced = True
                 return True
             except Exception as e:
-                print(f"⚠️ Serial write failed ({e}). Watchdog will reconnect.", flush=True)
+                print(f"Warning: Serial write failed ({e}). Watchdog will reconnect.", flush=True)
                 try:
                     ser_conn.close()
                 except Exception:
@@ -326,7 +326,7 @@ def run_bridge():
     server.settimeout(0.5)
 
     restore_sessions()
-    print("🚦 ARDUINO TRAFFIC LIGHT — TRUE PLUG & GO BRIDGE DAEMON")
+    print("Clawdy local status service")
     print("=" * 60)
 
     assets = os.path.join(os.path.dirname(__file__), "web")
@@ -358,7 +358,7 @@ def run_bridge():
         watchdog_thread = threading.Thread(target=hardware_watchdog, args=(dashboard.received,), daemon=True)
         watchdog_thread.start()
 
-    print(f"✅ Bridge TCP server listening on {TCP_HOST}:{TCP_PORT}...\n", flush=True)
+    print(f"Bridge TCP server listening on {TCP_HOST}:{TCP_PORT}...\n", flush=True)
 
     pid_file = Path(STATE_FILE).parent / 'bridge.pid'
     pid_file.parent.mkdir(parents=True, exist_ok=True)
@@ -369,7 +369,7 @@ def run_bridge():
             try:
                 settle_transition()
             except Exception as e:
-                print(f"⚠️ settle_transition error: {e}", file=sys.stderr, flush=True)
+                print(f"Warning: settle_transition error: {e}", file=sys.stderr, flush=True)
 
             try:
                 client, _ = server.accept()
@@ -384,7 +384,7 @@ def run_bridge():
                             save_sessions()
                             request_transition(new_agg)
                 except Exception as e:
-                    print(f"⚠️ Stale check error: {e}", file=sys.stderr, flush=True)
+                    print(f"Warning: Stale check error: {e}", file=sys.stderr, flush=True)
                 continue
             try:
                 raw_data = client.recv(1024).decode("utf-8", errors="ignore").strip()
@@ -486,7 +486,7 @@ def run_bridge():
                 request_transition(new_state)
                 if new_state != current_hardware_state or cmd == 'T' or not hardware_synced:
                     summary = f"[{new_state}] (Active Sessions: {len(active_sessions)})"
-                    print(f"🚦 Hardware ➔ {summary} | Triggered by '{session_id[:12]}' -> {cmd}", flush=True)
+                    print(f"Hardware -> {summary} | Triggered by '{session_id[:12]}' -> {cmd}", flush=True)
 
                 client.sendall(json.dumps({
                     "status": "ok",
@@ -496,7 +496,7 @@ def run_bridge():
                 }).encode("utf-8") + b"\n")
 
             except Exception as e:
-                print(f"⚠️ Bridge request error: {e}", file=sys.stderr, flush=True)
+                print(f"Warning: Bridge request error: {e}", file=sys.stderr, flush=True)
             finally:
                 client.close()
 
