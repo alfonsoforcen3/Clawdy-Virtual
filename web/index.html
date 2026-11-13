@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Clawdy — a little desk companion for your AI's big ideas."
+    />
+    <title>Clawdy · A little signal. A little soul.</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#"
+        >✳ <span data-name>Clawdy</span><small>DESK COMPANIONS</small></a
+      >
+      <nav aria-label="Main">
+        <a href="#setup">Get started</a><a href="#status">My companion</a
+        ><button class="shop preview">Meet your next companion ↗</button>
+      </nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="copy">
+          <p class="eyebrow">SMALL COMPANION. BIG IDEAS.</p>
+          <h1>Your AI has a<br />little <em>sidekick.</em></h1>
+          <p class="intro">
+            Meet <span data-name>Clawdy</span>. A little desk companion that
+            keeps you in the loop while your AI gets to work.
+          </p>
+          <div class="actions">
+            <a class="primary" href="#setup"
+              >Say hello to <span data-name>Clawdy</span> ↗</a
+            ><button class="text preview">Find your companion →</button>
+          </div>
+          <p class="micro">
+            Mac first · Bluetooth connected · Made for your desk
+          </p>
+        </div>
+        <div class="stage">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <span class="stage-note"
+            >A LITTLE COMPANY<br />FOR THE WORK AHEAD.</span
+          >
+          <div class="toy" role="img" aria-label="Illustration of Clawdy">
+            <div class="antenna"></div>
+            <div class="body">
+              <i class="eye left"></i><i class="eye right"></i
+              ><i class="smile"></i>
+              <div class="bill"></div>
+            </div>
+            <div class="foot left"></div>
+            <div class="foot right"></div>
+            <div class="beacon"><i></i><i></i><i></i></div>
+          </div>
+          <div class="shadow"></div>
+          <span class="toy-tag"><span data-name>Clawdy</span> / 01</span>
+        </div>
+      </section>
+      <div class="switch-row">
+        <span>CHOOSE YOUR LITTLE CO-WORKER</span>
+        <div class="switch" role="group" aria-label="Companion">
+          <button data-toy="clawdy" aria-pressed="true">✳ Clawdy</button
+          ><button data-toy="duck" aria-pressed="false">◒ CyberDuck</button>
+        </div>
+        <span class="preview-label">PRODUCT PREVIEW</span>
+      </div>
+      <section class="signals">
+        <div>
+          <p class="eyebrow">LESS TAB-CHECKING. MORE FLOW.</p>
+          <h2>One glance.<br />You’re in the loop.</h2>
+        </div>
+        <article>
+          <b class="dot green"></b>
+          <h3>All done.</h3>
+          <p>Green means the tracked work has finished.</p>
+        </article>
+        <article>
+          <b class="dot amber"></b>
+          <h3>On it.</h3>
+          <p>Amber stays on while any connected agent is working.</p>
+        </article>
+        <article>
+          <b class="dot red"></b>
+          <h3>A little help?</h3>
+          <p>Red signals an error or a request for your attention.</p>
+        </article>
+      </section>
+      <section id="status" class="device-status">
+        <div>
+          <p class="eyebrow">YOUR COMPANION, AT A GLANCE</p>
+          <h2>A little status check.</h2>
+          <p class="intro">USB powered. Connected over Bluetooth.</p>
+          <div class="connection"><i id="connection-dot"></i><span id="connection">Checking local bridge…</span></div>
+          <button id="reset-sessions" type="button" hidden>Clear sessions</button>
+          <p id="status-note" class="note">Waiting for a current report from your Clawdy.</p>
+          <a id="local-link" class="primary" href="http://127.0.0.1:8766/#status" hidden>Open my local dashboard ↗</a>
+        </div>
+        <div class="status-card">
+          <div class="card-top"><span>CLAWDY STATUS</span><span id="sample-age">CURRENT REPORT ONLY</span></div>
+          <div class="status-heading"><strong id="light-state">Waiting</strong></div>
+          <div class="readings">
+            <div><small>Connection</small><b id="transport">—</b></div>
+            <div><small>Firmware</small><b id="firmware">—</b></div>
+            <div><small>Display</small><b id="display-phase">—</b></div>
+          </div>
+          <p>Reported light state is not proof that a real provider turn completed. Setup also checks the visible LEDs and your selected AI applications.</p>
+        </div>
+      </section>
+      <section id="setup" class="setup">
+        <p class="eyebrow">SCANNED THE QR? YOU’RE HOME.</p>
+        <h2>Your desk, now connected.</h2>
+        <div class="steps">
+          <article>
+            <span>01</span>
+            <h3>Power your companion.</h3>
+            <p>
+              Your finished toy arrives with its firmware installed. Connect its USB power and keep it nearby.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Tell your AI hello.</h3>
+            <p>
+              Ask your local AI with terminal access to set up your new Clawdy using the public repository. The guided terminal wizard finds your toy and installed supported AI tools.
+            </p>
+            <a class="text" href="https://github.com/alfonsoforcen3/Clawdy-Virtual/blob/main/docs/CUSTOMER_SETUP.md">AI-assisted setup ↗</a>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Allow the connection.</h3>
+            <p>
+              Approve Bluetooth access in macOS, then review hooks in each AI
+              tool. Your prompts stay out of the light’s messages.
+            </p>
+          </article>
+        </div>
+        <details>
+          <summary>Which AI tools will it work with?</summary>
+          <p>
+            The prototype supports local Codex, Claude Code, Gemini CLI and
+            Cursor hooks. Availability depends on each tool’s installed version
+            and hook support. Ordinary browser chats are not tracked.
+          </p>
+        </details>
+        <details>
+          <summary>What if I’m running more than one chat?</summary>
+          <p>
+            The Mac combines tracked sessions: green waits until all work has
+            finished. Attention takes priority over errors, errors over working,
+            and working over done.
+          </p>
+        </details>
+
+      </section>
+      <section class="closing">
+        <p class="eyebrow">GOOD WORK DESERVES GOOD COMPANY.</p>
+        <h2>A small thing.<br />A nicer desk.</h2>
+        <button class="primary preview">Meet your next companion ↗</button>
+        <p class="micro">
+          Product and purchasing preview · Pricing and availability coming soon
+        </p>
+      </section>
+    </main>
+    <footer>
+      <span class="brand">✳ <span data-name>Clawdy</span></span
+      ><span>Little signals for big ideas.</span
+      ><a href="https://github.com/alfonsoforcen3/Clawdy-Virtual"
+        >Setup & support ↗</a
+      >
+    </footer>
+    <dialog>
+      <button id="close-dialog" aria-label="Close">×</button>
+      <p class="eyebrow">A LITTLE MORE TIME.</p>
+      <h2>Almost ready to say hello.</h2>
+      <p>
+        This is a product preview. Checkout and the signed Mac installer aren’t
+        available yet. No payment or personal details are collected here.
+      </p>
+      <button id="dismiss" class="primary">Got it</button>
+    </dialog>
+  </body>
+</html>
