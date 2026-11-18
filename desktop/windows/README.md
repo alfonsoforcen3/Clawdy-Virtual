@@ -14,6 +14,9 @@ chats are not tracked. Leave a released physical laptop released.
 
 ## Build on native Windows
 
+For a normal install, follow [live setup](../../docs/VIRTUAL_SETUP.md) to reuse
+your bridge and configure the AI app hooks you approve.
+
 Use native PowerShell on a supported Windows 11 x64 or ARM64 PC. From an
 existing checkout, open PowerShell at the repository root. For a fresh setup,
 clone with Git and enter the checkout.
@@ -51,11 +54,12 @@ while access is pending.
 
 ### Run Virtual Clawdy (Live Bridge by default)
 
-Use the directory printed by the build script. By default, Virtual Clawdy connects directly to your live local status bridge (TCP port 8765) to monitor real active sessions:
+Set `$buildOutput` to the directory printed by the build script. By default, Virtual Clawdy connects directly to your live local status bridge (TCP port 8765) to monitor real active sessions:
 
 ```powershell
-$exe = Join-Path $env:LOCALAPPDATA 'ClawdyPrototype\Build\publish\win-x64\Clawdy.Windows.exe'
-& $exe
+$buildOutput = 'C:\path\from\the\build\output'
+$exe = Join-Path $buildOutput 'Clawdy.Windows.exe'
+& $exe --observe
 ```
 
 If `py -3` is unavailable, pass a verified native Python executable as a separate argument:

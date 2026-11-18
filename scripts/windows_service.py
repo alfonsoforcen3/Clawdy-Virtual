@@ -36,8 +36,9 @@ def stop():
     raise RuntimeError('Bridge did not stop; installation left unchanged.')
 
 
-def install(root, runtime, python, config):
-    stop()
+def install(root, runtime, python, config, *, replace_running=True):
+    if replace_running:
+        stop()
     for name in ('bridge.py', 'ble_transport.py', 'dashboard.py'):
         shutil.copy2(root / 'scripts' / name, runtime / name)
     shutil.copytree(root / 'web', runtime / 'web', dirs_exist_ok=True)

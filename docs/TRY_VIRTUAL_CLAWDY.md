@@ -1,8 +1,9 @@
-# Try Virtual Clawdy on Mac
+# Build and run Virtual Clawdy on Mac
 
 Virtual Clawdy puts three traffic lights and a compact status card in your
-menu bar. The demo uses sample events so you can try it without configuring
-an AI app. See the [Windows guide](../desktop/windows/README.md) for Windows.
+menu bar. For a normal install, follow [live setup](VIRTUAL_SETUP.md) to
+reuse your bridge and approve your AI app hooks. See the
+[Windows guide](../desktop/windows/README.md) for Windows.
 
 ## Build the Mac preview
 
@@ -21,14 +22,14 @@ CLAWDY_BUILD_DIR="$HOME/Library/Caches/ClawdyPrototype/SourcePreview" bash deskt
 ```
 
 Quit any existing Clawdy instance from its menu before starting the new one.
-Launch it with sample activity:
+Launch it in Observe mode:
 
 ```sh
-open "$HOME/Library/Caches/ClawdyPrototype/SourcePreview/VirtualClawdy.app" --args --demo
+open "$HOME/Library/Caches/ClawdyPrototype/SourcePreview/VirtualClawdy.app" --args --observe
 ```
 
 Look for the traffic lights in the menu bar. Hover or click to see the card.
-For live observation, set up the [local status service and app hooks](LOCAL_STATUS.md).
+For sample activity, select Demo in the app menu or launch with `--demo`.
 The [native app guide](../desktop/macos/README.md) explains the optional overlay,
 attention behavior and verification commands.
 

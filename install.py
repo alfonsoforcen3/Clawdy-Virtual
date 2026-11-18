@@ -39,11 +39,14 @@ def onboarding_requested(argv):
     return True
 
 def main():
+    if '--virtual' in sys.argv[1:]:
+        from scripts.setup_virtual import run_cli
+        return run_cli([arg for arg in sys.argv[1:] if arg != '--virtual'])
     if onboarding_requested(sys.argv[1:]):
         from scripts.onboard import run_cli as onboard
         return onboard([arg for arg in sys.argv[1:] if arg != '--onboard'])
     parser = argparse.ArgumentParser(description=__doc__, epilog='New Clawdy: run without arguments or use --onboard. '
-        'Agent preview: --onboard --preflight --json. BLE selection does not need a USB data cable.')
+        'Physical preflight: --onboard --preflight --json. Virtual live setup: --virtual --preflight --json.')
     parser.add_argument('--transport', choices=['ble', 'local', 'serial'],
                         help='Use local for desktop-only live status, BLE for a toy, or serial for legacy diagnostics')
     parser.add_argument('--ble-name', help='Exact verified advertisement; use --onboard for buyer device selection')

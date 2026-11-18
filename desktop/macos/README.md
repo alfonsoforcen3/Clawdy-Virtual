@@ -14,6 +14,9 @@ register startup, change a physical device or launch the existing bridge.
 
 ## Build and run
 
+For a normal install, follow [live setup](../../docs/VIRTUAL_SETUP.md) to reuse
+your bridge and configure the AI app hooks you approve.
+
 Requires macOS, Apple's Swift Command Line Tools and `/usr/bin/python3`.
 Builds for the local CPU with a macOS 13 deployment target; this target is not
 proof of testing on every supported OS or Intel hardware. Full Xcode, a webview,
@@ -21,7 +24,7 @@ a model API key and a Bluetooth toy are unnecessary for the demo.
 
 ```bash
 bash desktop/macos/build.sh
-open "$HOME/Library/Caches/ClawdyPrototype/Build/VirtualClawdy.app" --args --demo
+open "$HOME/Library/Caches/ClawdyPrototype/Build/VirtualClawdy.app" --args --observe
 ```
 
 Artifacts stay in a local cache rather than the cloud-backed Desktop checkout;
