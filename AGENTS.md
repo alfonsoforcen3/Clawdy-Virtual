@@ -9,13 +9,14 @@ installation request.
   [physical setup](docs/CUSTOMER_SETUP.md). Use native Windows PowerShell or
   macOS Terminal. First run the read-only preflight, then review the exact toy,
   preferred name and selected apps with the buyer before applying changes.
-- **“Install Virtual Clawdy.”** Build the
-  [Mac](docs/TRY_VIRTUAL_CLAWDY.md) or [Windows](desktop/windows/README.md)
-  desktop preview. Offer a demo first or, with approval, set up
-  [live local status](docs/LOCAL_STATUS.md) and hooks for the apps they choose.
-  The virtual-only path needs no Bluetooth or hardware.
-- **“I want both.”** Set up the physical device and selected hooks once, then
-  build Virtual Clawdy and use Observe mode with that same local service.
+- **“Install Virtual Clawdy.”** Follow [live Virtual Clawdy setup](docs/VIRTUAL_SETUP.md).
+  Run read-only preflight, reuse a compatible bridge, get approval to configure
+  the user's supported app hooks, and launch the desktop app in **Observe**.
+  Verify a real turn in each approved app. Treat live tracking as incomplete if
+  hooks are declined, blocked or unverified. Use Demo only on explicit request.
+- **“I want both.”** Follow [physical setup](docs/CUSTOMER_SETUP.md) for Bluetooth and
+  the selected hooks, then install and verify Virtual Clawdy against that same
+  bridge. Reuse the hooks set up for the toy.
 - **Unclear which one?** Ask whether they have a powered physical Clawdy
   or want the desktop app only.
 

@@ -56,7 +56,7 @@ def save(data):
     temporary.write_text(json.dumps(data, indent=2) + '\n')
     temporary.replace(HOOKS)
 
-def install_service(transport=None, ble_name=None, device_id=None):
+def install_service(transport=None, ble_name=None, device_id=None, *, python=None, replace_running=True):
     if sys.platform not in ('darwin', 'win32'):
         raise RuntimeError('Use native macOS or Windows Python.')
     config_path = RUNTIME / 'connection.json'
@@ -64,6 +64,8 @@ def install_service(transport=None, ble_name=None, device_id=None):
         'transport': 'serial', 'ble_name': None}
     if not isinstance(config, dict):
         raise RuntimeError('Invalid connection configuration; left unchanged.')
+    if not replace_running and config_path.exists() and config.get('transport') != 'local':
+        raise RuntimeError('A saved device profile appeared during virtual setup. Run preflight again.')
     if transport:
         config['transport'] = transport
     if ble_name:
@@ -87,7 +89,7 @@ def install_service(transport=None, ble_name=None, device_id=None):
         raise RuntimeError('Run python3 install.py to discover your board, or provide --ble-name.')
     RUNTIME.mkdir(parents=True, exist_ok=True)
     shutil.copy2(ROOT / 'scripts' / 'traffic.py', RUNTIME / 'traffic.py')
-    python = Path(sys.executable)
+    python = Path(sys.executable) if python is None else python
     if config['transport'] == 'ble':
         python = venv_python(RUNTIME)
         if not python.exists():
@@ -101,7 +103,10 @@ def install_service(transport=None, ble_name=None, device_id=None):
             from scripts.windows_service import install
         except ModuleNotFoundError:
             from windows_service import install
-        install(ROOT, RUNTIME, python, config)
+        if replace_running:
+            install(ROOT, RUNTIME, python, config)
+        else:
+            install(ROOT, RUNTIME, python, config, replace_running=False)
     config_path.write_text(json.dumps(config, indent=2) + '\n')
     if sys.platform == 'darwin':
         PLIST.parent.mkdir(parents=True, exist_ok=True)
@@ -126,8 +131,9 @@ def install_service(transport=None, ble_name=None, device_id=None):
                                             'TRAFFIC_BLE_NAME': config.get('ble_name') or ''},
                    'StandardOutPath': str(RUNTIME / 'bridge.log'),
                    'StandardErrorPath': str(RUNTIME / 'bridge.log'), 'ThrottleInterval': 5}
-        subprocess.run(['launchctl', 'bootout', 'gui/' + str(os.getuid()), str(PLIST)],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if replace_running:
+            subprocess.run(['launchctl', 'bootout', 'gui/' + str(os.getuid()), str(PLIST)],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         PLIST.write_bytes(plistlib.dumps(service))
         subprocess.run(['launchctl', 'bootstrap', 'gui/' + str(os.getuid()), str(PLIST)], check=True)
 

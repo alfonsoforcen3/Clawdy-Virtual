@@ -26,11 +26,11 @@ your computer. Keep the option that applies to you.
 
 > Clone https://github.com/alfonsoforcen3/Clawdy-Virtual and follow its setup instructions. I want to [set up the physical Clawdy I bought / install Virtual Clawdy].
 
-Both options use the same local status service and the AI hooks you approve.
-Choose physical to connect your toy over Bluetooth, or virtual to install the
-desktop app. The app can also show live status while your toy is connected.
+Virtual Clawdy opens in Observe mode, shares your existing bridge, and guides
+you through approving and testing hooks for your AI apps. If you have a physical
+Clawdy, both companions can use that same bridge.
 
-[Physical setup guide](docs/CUSTOMER_SETUP.md) · [Live desktop status and hooks](docs/LOCAL_STATUS.md)
+[Physical setup guide](docs/CUSTOMER_SETUP.md) · [Install Virtual Clawdy with live hooks](docs/VIRTUAL_SETUP.md)
 
 ### Watch Clawdy in action
 
@@ -56,11 +56,12 @@ https://github.com/user-attachments/assets/322907c2-873e-484b-a2b7-2aba966a8862
 | 🟢 Green | Your agent has reported it’s ready. |
 | 🔴 Red | A question or error needs your attention. Supported alerts offer a way back to the chat or app. |
 
-### Try Clawdy
+### Install or try Clawdy
 
-1. [Open the interactive desk demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience) and switch between **Working**, **Done**, and **Your turn**.
-2. Build the desktop preview for [macOS 13+](docs/TRY_VIRTUAL_CLAWDY.md) or [Windows 11 x64 / ARM64](desktop/windows/README.md).
-3. Start Clawdy. By default, it connects directly to your live local bridge to observe real AI sessions (`--observe`). Pass `--demo` if you want simulated fixture activity without a local bridge.
+Use the [live Virtual Clawdy setup guide](docs/VIRTUAL_SETUP.md) to install
+approved hooks and run the desktop app in Observe on macOS or Windows.
+To try sample activity, open the [interactive browser demo](https://alfonsoforcen3.github.io/Clawdy-Virtual/#experience)
+or explicitly launch a desktop build with `--demo`.
 
 Use the update controls in the Mac menu bar or Windows tray. Enable
 **Automatic Updates** to prepare tested changes from GitHub in the background,
@@ -68,10 +69,8 @@ then apply the update on the next normal launch. You can also restart Clawdy
 from the update menu as soon as it is ready. Older previews need a one-time
 rebuild to get these controls.
 
-Install the [local status service and hooks](docs/LOCAL_STATUS.md) to see live
-activity from your selected AI apps, with or without a toy. Windows
-is a source preview with automated build and fixture coverage. Hands-on Windows
-tray testing is still pending.
+Windows is a source preview with automated build and fixture coverage.
+Hands-on Windows tray testing is still pending.
 
 ### Want one on your desk?
 
