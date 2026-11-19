@@ -268,7 +268,27 @@ async def rename_device(address, name, expected_device_id, timeout=12.0):
                              r.get('device_id') == expected_device_id, timeout)
     if ack.get('ok') is not True or ack.get('persistent') is not True or ack.get('ble_name') != name:
         raise ValueError(ack.get('error', 'Rename was not persistently acknowledged'))
-    return ack
+    # Read Q on a new BLE connection. A write acknowledgement alone does not
+    # establish that the selected unit will report its saved name on reconnect.
+    deadline = time.monotonic() + _validated_timeout(timeout)
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError('Rename acknowledged, but saved name could not be read back on reconnect')
+        try:
+            saved = await inspect_device(address, timeout=remaining)
+        except ValueError:
+            raise  # A malformed identity is not a reconnect delay.
+        except Exception:
+            # Bleak backend connection errors vary across platforms. Firmware
+            # may briefly restart advertising after applying the name.
+            saved = None
+        if saved is not None:
+            if saved.get('device_id') != expected_device_id:
+                raise ValueError('Selected device identity changed after rename')
+            if saved.get('ble_name') == name:
+                return ack
+        await asyncio.sleep(min(.3, max(0, deadline - time.monotonic())))
 
 
 async def identify_device(address, expected_device_id=None, timeout=12.0):

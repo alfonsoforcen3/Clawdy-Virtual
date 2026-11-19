@@ -90,6 +90,11 @@ class OnboardTests(unittest.TestCase):
         runtime = patch.object(onboard, 'RUNTIME', self.runtime)
         runtime.start()
         self.addCleanup(runtime.stop)
+        # Existing workflow fixtures replace the installer subprocess. Profile
+        # readback has separate tests using real temporary connection files.
+        profile_check = patch.object(onboard, 'verify_saved_connection')
+        profile_check.start()
+        self.addCleanup(profile_check.stop)
         # A missed workflow mock must fail immediately, never touch Bluetooth.
         for operation in ('discover_candidates', 'inspect_device', 'identify_device', 'rename_device'):
             guard = patch.object(onboard.device_identity, operation,

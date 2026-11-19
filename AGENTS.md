@@ -8,7 +8,10 @@ installation request.
 - **“I bought a Clawdy” or “I have a new Clawdy Pro Max.”** Start
   [physical setup](docs/CUSTOMER_SETUP.md). Use native Windows PowerShell or
   macOS Terminal. First run the read-only preflight, then review the exact toy,
-  preferred name and selected apps with the buyer before applying changes.
+  buyer's name or desired Clawdy name, and selected apps before applying changes.
+  Follow [the physical buyer agent guide](docs/CUSTOMER_AGENT.md) to personalize
+  the explicitly selected unit, verify its saved name over a new BLE connection,
+  and preserve its immutable identity. The buyer can explicitly keep its current name.
 - **“Install Virtual Clawdy.”** Follow [live Virtual Clawdy setup](docs/VIRTUAL_SETUP.md).
   Run read-only preflight, reuse a compatible bridge, get approval to configure
   the user's supported app hooks, and launch the desktop app in **Observe**.

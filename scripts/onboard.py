@@ -123,6 +123,7 @@ def preflight_report(args):
         if blocked:
             next_steps.append('Review blocked app policies: ' + ', '.join(blocked) + '. Choose only approved usable adapters or --no-hooks; do not bypass disabled hooks or trust controls.')
         next_steps.append('Confirm which detected supported apps may receive hooks, or choose --no-hooks. Detection is not a real-provider acceptance test.')
+        next_steps.append('Ask for the buyer\'s name or desired Clawdy name, or an explicit choice to keep the current name. Confirm rename support on the selected toy before applying it.')
         if not dependencies['bleak']:
             next_steps.append('Bluetooth dependencies are missing. Discovery with --yes may create a private Python environment and download packages; obtain approval first.')
         next_steps += [
@@ -335,6 +336,7 @@ class RecoveryRecord:
                      'previous_name': report['ble_name'], 'target_name': target,
                      'providers': list(providers), 'customer_ready': False,
                      'verification': {'bluetooth_delivery': 'pending', 'gpio_acknowledgements': 'pending',
+                                      'saved_name_reconnect': 'pending', 'host_profile': 'pending',
                                       'visible_leds': 'pending', 'provider_trust': 'pending',
                                       'real_provider_turns': {provider: 'pending' for provider in providers},
                                       'power_cycle': 'pending', 'host_restart': 'pending'}}
@@ -378,6 +380,14 @@ class RecoveryRecord:
         ui.detail('Safety', 'Identify the physical toy again. If it kept the old name, select that name instead.')
 
 
+def verify_saved_connection(name, device_id):
+    """Confirm the installer saved the selected unit, including its new name."""
+    saved = existing_connection()
+    if (saved is None or saved['transport'] != 'ble' or saved['ble_name'] != name
+            or saved['device_id'] != device_id):
+        raise RuntimeError('Installed connection profile does not match the selected toy name and identity; review the recovery record before retrying.')
+
+
 def complete_setup(args, ui, selected, report, providers, nickname):
     if existing_connection() != getattr(args, 'existing_connection', None):
         raise RuntimeError('Laptop connection/profile changed during setup. Review it and confirm a new enrollment before installing.')
@@ -399,8 +409,10 @@ def complete_setup(args, ui, selected, report, providers, nickname):
                     or ack.get('persistent') is not True or ack.get('ble_name') != target):
                 raise RuntimeError('Board did not acknowledge a persistent rename; host installation stopped.')
             recovery.save('renamed')
-            ui.status('ok', 'Your toy confirmed the saved name.')
+            recovery.data['verification']['saved_name_reconnect'] = 'passed'
+            ui.status('ok', 'Your toy reported the saved name and same identity on a new Bluetooth connection.')
         else:
+            recovery.data['verification']['saved_name_reconnect'] = 'not_requested'
             ui.status('ok', 'Keeping your toy name: ' + target)
         recovery.save('installing')
         if existing_connection() != getattr(args, 'existing_connection', None):
@@ -418,6 +430,8 @@ def complete_setup(args, ui, selected, report, providers, nickname):
         except subprocess.CalledProcessError as error:
             raise RuntimeError('Companion installation failed (exit %s); some components may already be installed.'
                                % error.returncode) from error
+        verify_saved_connection(target, report.get('device_id'))
+        recovery.data['verification']['host_profile'] = 'passed'
         recovery.save('installed_unverified')
         if args.skip_verification:
             ui.status('pending', 'Installed; Bluetooth delivery, visible LEDs and real provider acceptance remain unverified.')
@@ -582,7 +596,13 @@ def main(argv=None):
     if not nickname and not args.keep_name:
         if not sys.stdin.isatty():
             raise RuntimeError('Supply --nickname or --keep-name.')
-        nickname = input('What would you like to call your Clawdy? ').strip()
+        while not nickname:
+            nickname = input('Your first name or chosen Clawdy name (type /keep to keep its current name): ').strip()
+            if nickname == '/keep':
+                nickname = None
+                break
+            if not nickname:
+                ui.status('info', 'Enter your first name or a chosen Clawdy name, or type /keep.')
     desired = make_name(args.laptop_name, nickname) if nickname else args.ble_name
     ui.detail('Bluetooth name preview (UID pending)' if nickname else 'Bluetooth name',
               desired or 'Choose from nearby devices')
